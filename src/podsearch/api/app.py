@@ -153,7 +153,7 @@ def create_app(settings: "Settings | None" = None, qdrant: "QdrantClient | None"
             CACHE_HITS.inc()
 
         try:
-            hub_cut = None if below else s.hub_z_max                 # the debug view shows everything, hubs included
+            hub_cut = None if below else s.hub_max                 # the debug view shows everything, hubs included
             points = await run_in_threadpool(vectors.search, qdrant, s.collection, vec, k, threshold, hub_cut)
         except Exception as e:
             log.warning("qdrant query failed", extra={"error": repr(e)})
@@ -161,7 +161,7 @@ def create_app(settings: "Settings | None" = None, qdrant: "QdrantClient | None"
 
         hits = [{"score": round(p.score, 4), "name": p.payload["name"], "episode": p.payload["episode"],
                  "chunk_index": p.payload["chunk_index"], "start_s": p.payload["start_s"],
-                 "end_s": p.payload["end_s"], "hub_z": p.payload.get("hub_z"), "audio_url": f"/audio/{p.payload['name']}"} for p in points]
+                 "end_s": p.payload["end_s"], "hub": p.payload.get("hub"), "audio_url": f"/audio/{p.payload['name']}"} for p in points]
         HITS.observe(len(hits))
         if hits:
             TOP_SCORE.observe(hits[0]["score"])

@@ -30,8 +30,17 @@ load: upload-all    ## alias: load the sample data set
 ls:                 ## list the bucket (incoming/, library/, rejected/)
 	@kubectl -n podsearch exec deploy/toolbox -- aws s3 ls s3://podcasts/ --recursive --human-readable
 
-hubness:           ## score chunks for the hub filter (run after ingest): needs the embedder up
+hubness:           ## backfill `hub` scores for points that lack them (new audio is scored at ingest)
 	@kubectl -n podsearch exec deploy/controller -- python -m podsearch.hubness
+
+probes:             ## regenerate src/podsearch/probe_centroid.json from the running embedder (only if PROBES or the model changed)
+	@kubectl -n podsearch exec deploy/controller -- python -m podsearch.hubness probes > src/podsearch/probe_centroid.json
+
+eval:               ## run the required queries and write results/queries.md (labels are yours to fill in)
+	@python3 scripts/eval.py
+
+label:              ## open the local labeling page (http://localhost:8099); saves every click to results/
+	@python3 scripts/label.py
 
 lock:               ## regenerate images/ml-base/requirements.<arch>.txt
 	@scripts/lock.sh

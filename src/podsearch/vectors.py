@@ -20,7 +20,7 @@ def ensure_collection(client: QdrantClient, name: str, size: int = 1024) -> None
             name, vectors_config=models.VectorParams(size=size, distance=models.Distance.COSINE))
     for field in ("file_id", "name", "episode"):   # filter fields: delete-by-file, search-in-episode
         client.create_payload_index(name, field, models.PayloadSchemaType.KEYWORD)
-    client.create_payload_index(name, "hub_z", models.PayloadSchemaType.FLOAT)   # written by `make hubness`
+    client.create_payload_index(name, "hub", models.PayloadSchemaType.FLOAT)   # scored at ingest, see hubness.py
 
 
 def upsert_chunks(client: QdrantClient, name: str, file_id: str, vectors: np.ndarray,
@@ -38,11 +38,11 @@ def delete_file(client: QdrantClient, name: str, file_id: str) -> None:
 
 
 def search(client: QdrantClient, name: str, query_vec: np.ndarray, k: int, threshold: float,
-           hub_z_max: "float | None" = None):
-    """`hub_z_max`: skip chunks whose hub score is above it. A chunk without hub_z (not scored yet) is kept.
+           hub_max: "float | None" = None):
+    """`hub_max`: skip chunks whose hub score is above it. A chunk without `hub` (not backfilled yet) is kept.
     Qdrant applies the filter before limit and score_threshold, so hubs never take up result slots."""
-    hubs = None if hub_z_max is None else models.Filter(must_not=[
-        models.FieldCondition(key="hub_z", range=models.Range(gt=hub_z_max))])
+    hubs = None if hub_max is None else models.Filter(must_not=[
+        models.FieldCondition(key="hub", range=models.Range(gt=hub_max))])
     return client.query_points(name, query=normalize(query_vec).tolist(), limit=k, score_threshold=threshold,
                                query_filter=hubs, with_payload=True).points
 

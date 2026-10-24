@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     vector_size: int = 1024
 
     score_threshold: float = 0.20            # true cosine, see CLAUDE.md
-    hub_z_max: float = 3.0                   # chunks scored above this by `make hubness` are hidden from search
+    hub_max: float = 0.17                    # hide chunks with hub score above this: mean+3*std of 540 chunks = 0.173 (DECISIONS)
     max_attempts: int = 3                    # failures before a file moves to rejected/
 
     ray_address: str = "http://ray-head-svc:8265"   # Ray Jobs REST API

@@ -1,0 +1,222 @@
+{
+  "Iran|ep289-kotkin|1280": {
+    "label": "✗",
+    "reason": "word isn't mentioned"
+  },
+  "Iran|ep289-kotkin|870": {
+    "label": "✗",
+    "reason": "word isn't mentioned"
+  },
+  "Iran|ep310-bustamante|1740": {
+    "label": "✗",
+    "reason": "word isn't mentioned"
+  },
+  "Iran|ep334-amanat|1120": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Iran|ep334-amanat|1280": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Iran|ep334-amanat|1290": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Iran|ep334-amanat|1310": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Iran|ep334-amanat|1370": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Iran|ep334-amanat|1390": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Iran|ep334-amanat|1650": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Iran|ep334-amanat|1680": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Iran|ep334-amanat|1700": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Iran|ep334-amanat|1770": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Iran|ep334-amanat|1790": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Iran|ep334-amanat|730": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Iran|ep334-amanat|780": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Middle East|ep289-kotkin|1280": {
+    "label": "✗",
+    "reason": ""
+  },
+  "Middle East|ep289-kotkin|760": {
+    "label": "✗",
+    "reason": ""
+  },
+  "Middle East|ep289-kotkin|870": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Middle East|ep310-bustamante|1740": {
+    "label": "✗",
+    "reason": ""
+  },
+  "Middle East|ep334-amanat|1700": {
+    "label": "✗",
+    "reason": ""
+  },
+  "Middle East|ep334-amanat|730": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Middle East|ep334-amanat|780": {
+    "label": "✗",
+    "reason": ""
+  },
+  "Putin|ep289-kotkin|1020": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Putin|ep289-kotkin|1050": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Putin|ep289-kotkin|1060": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Putin|ep289-kotkin|1250": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Putin|ep289-kotkin|1270": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Putin|ep289-kotkin|1280": {
+    "label": "✗",
+    "reason": "word isn't mentioned"
+  },
+  "Putin|ep289-kotkin|1390": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Putin|ep289-kotkin|1420": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Putin|ep289-kotkin|1540": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Putin|ep289-kotkin|1550": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Putin|ep289-kotkin|1570": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Putin|ep289-kotkin|1790": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Putin|ep289-kotkin|630": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Putin|ep289-kotkin|660": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Putin|ep289-kotkin|690": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Putin|ep289-kotkin|700": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Putin|ep289-kotkin|790": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Putin|ep310-bustamante|1210": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Putin|ep310-bustamante|1740": {
+    "label": "✗",
+    "reason": "word isn't mentioned"
+  },
+  "Putin|ep310-bustamante|1780": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Ukraine|ep289-kotkin|1280": {
+    "label": "✗",
+    "reason": "word isn't mentioned"
+  },
+  "Ukraine|ep289-kotkin|80": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Ukraine|ep289-kotkin|870": {
+    "label": "✗",
+    "reason": "word isn't mentioned"
+  },
+  "Ukraine|ep310-bustamante|1210": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Ukraine|ep310-bustamante|1490": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Ukraine|ep310-bustamante|1520": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Ukraine|ep310-bustamante|1530": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Ukraine|ep310-bustamante|1630": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Ukraine|ep310-bustamante|1740": {
+    "label": "✓",
+    "reason": ""
+  },
+  "Ukraine|ep334-amanat|1700": {
+    "label": "✗",
+    "reason": "word isn't mentioned"
+  },
+  "Ukraine|ep334-amanat|730": {
+    "label": "✗",
+    "reason": "word isn't mentioned"
+  },
+  "Ukraine|ep334-amanat|780": {
+    "label": "✗",
+    "reason": "word isn't mentioned"
+  }
+}

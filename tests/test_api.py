@@ -17,7 +17,7 @@ from podsearch.config import Settings
 from podsearch.store import Store
 
 DIM = 4
-S = Settings(vector_size=DIM, collection="t", text_model="m", score_threshold=0.2, s3_bucket="podcasts")
+S = Settings(vector_size=DIM, collection="t", text_model="m", score_threshold=0.2, s3_bucket="podcasts", hub_max=0.3)
 AUDIO = bytes(range(100))
 
 
@@ -87,11 +87,11 @@ def test_bad_input_is_400_and_never_reaches_the_embedder(env, params):
 
 def test_hub_chunks_are_hidden_unless_debug_and_do_not_use_up_result_slots(env):
     c, _ = env
-    c.qdrant.set_payload("t", {"hub_z": 6.0}, points=[point_id("f1", 0)])        # chunk 0 is the best match for "iran"
+    c.qdrant.set_payload("t", {"hub": 0.5}, points=[point_id("f1", 0)])        # chunk 0 is the best match for "iran"
     r = c.get("/search", params={"q": "iran", "k": 1}).json()
     assert [h["chunk_index"] for h in r["hits"]] == [1]                           # the hub is skipped, k=1 is still filled
     dbg = c.get("/search", params={"q": "iran", "k": 1, "below_threshold": "true"}).json()
-    assert dbg["hits"][0]["chunk_index"] == 0 and dbg["hits"][0]["hub_z"] == 6.0  # debug shows hubs, with their score
+    assert dbg["hits"][0]["chunk_index"] == 0 and dbg["hits"][0]["hub"] == 0.5  # debug shows hubs, with their score
 
 
 def test_repeated_query_is_served_from_the_cache(env):

@@ -57,7 +57,7 @@ class RayJobs:
         self.http.post(f"/api/jobs/{job_id}/stop").raise_for_status()
 
     def active_managed(self) -> list[tuple[str, list[str]]]:
-        """Jobs this controller (an earlier incarnation) started that are still running."""
+        """(job id, files) of jobs an earlier incarnation of this controller started that are still running."""
         r = self.http.get("/api/jobs/")
         r.raise_for_status()
         return [(j["submission_id"], json.loads(j["metadata"]["keys"])) for j in r.json()
@@ -144,10 +144,10 @@ class Controller:
             return
         elapsed = self.clock() - self.job_started
         if status in TERMINAL:
+            log.info("job finished", extra={"job_id": self.job_id, "status": status, "seconds": round(elapsed)})
             JOB_SECONDS.observe(elapsed)
             if status != "SUCCEEDED":
                 JOBS_BAD.labels(status.lower()).inc()
-            log.info("job finished", extra={"job_id": self.job_id, "status": status, "seconds": round(elapsed)})
             with self.lock:
                 self.inflight, self.job_id = set(), None   # unfinished files are still in incoming/: reconcile retries
         elif elapsed > self.s.job_timeout_s:

@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Label hits</title>
+<style>
+  body { font: 16px/1.4 system-ui, sans-serif; max-width: 820px; margin: 1.5rem auto; padding: 0 1rem; }
+  nav { display: flex; gap: .5rem; flex-wrap: wrap; position: sticky; top: 0; background: #fff; padding: .5rem 0; border-bottom: 1px solid #ddd; }
+  nav button { padding: .4rem .8rem; font-size: .95rem; cursor: pointer; }
+  nav button.on { background: #222; color: #fff; }
+  .opts { margin: .6rem 0; color: #555; font-size: .9rem; }
+  .hit { border: 1px solid #ddd; border-radius: 8px; padding: .6rem .8rem; margin: .7rem 0; }
+  .hit.ok { border-color: #2e7d32; background: #f3faf3; }
+  .hit.bad { border-color: #b00020; background: #fdf4f5; }
+  .meta { display: flex; gap: .9rem; align-items: baseline; flex-wrap: wrap; }
+  .rank { color: #777; } .score { font-weight: 600; font-variant-numeric: tabular-nums; }
+  audio { width: 100%; margin: .4rem 0; }
+  .row { display: flex; gap: .5rem; align-items: center; }
+  .row input[type=text] { flex: 1; padding: .4rem; font-size: .95rem; }
+  .btn { padding: .4rem .9rem; font-size: 1.1rem; cursor: pointer; border: 1px solid #999; background: #fff; border-radius: 6px; }
+  .btn.ok.on { background: #2e7d32; color: #fff; border-color: #2e7d32; }
+  .btn.bad.on { background: #b00020; color: #fff; border-color: #b00020; }
+  .ctx { color: #666; font-size: .85rem; margin-top: 1rem; }
+  #saved { color: #2e7d32; font-size: .85rem; margin-left: .5rem; }
+</style>
+</head>
+<body>
+<h1>Label hits <span id="saved"></span></h1>
+<p style="color:#555;margin:0">Listen, then press ✓ (about the topic) or ✗ (not), and add a short reason. Saved on every click. Press the same button again to clear.</p>
+<nav id="tabs"></nav>
+<div class="opts"><label><input type="checkbox" id="onlyTodo"> show only unlabelled</label> <span id="progress"></span></div>
+<div id="list"></div>
+<script>
+let D, current = 0;
+const $ = id => document.getElementById(id);
+const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+const keyOf = (q, h) => `${q.query}|${h.episode}|${Math.floor(h.start_s)}`;
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+
+async function save(key, label, reason) {
+  const r = await fetch("/label", { method: "POST", body: JSON.stringify({ key, label, reason }) });
+  if (r.ok) { $("saved").textContent = "saved"; setTimeout(() => $("saved").textContent = "", 1200); }
+  else alert("Could not save the label (is `make label` still running?)");
+}
+
+function render() {
+  const q = D.queries[current];
+  $("tabs").replaceChildren(...D.queries.map((x, i) => {
+    const done = x.hits.filter(h => (D.labels[keyOf(x, h)] || {}).label).length;
+    const b = el("button", i === current ? "on" : "", `${x.query} (${done}/${x.hits.length})`);
+    b.onclick = () => { current = i; render(); window.scrollTo(0, 0); };
+    return b;
+  }));
+  const only = $("onlyTodo").checked, list = $("list"), cards = [];
+  q.hits.forEach((h, i) => {
+    const key = keyOf(q, h), lab = D.labels[key] || { label: "", reason: "" };
+    if (only && lab.label) return;
+    const card = el("div", "hit" + (lab.label === "✓" ? " ok" : lab.label === "✗" ? " bad" : ""));
+    const meta = el("div", "meta");
+    meta.append(el("span", "rank", `#${i + 1}`), el("span", "score", h.score.toFixed(3)),
+                el("strong", "", h.episode), el("span", "", `${mmss(h.start_s)} – ${mmss(h.end_s)}`));
+    const audio = el("audio"); audio.controls = true; audio.preload = "none";
+    audio.src = `${D.api}${h.audio_url}#t=${Math.floor(h.start_s)},${Math.ceil(h.end_s)}`;
+    const reason = el("input"); reason.type = "text"; reason.placeholder = "reason (a few words)"; reason.value = lab.reason;
+    const set = (label) => {
+      const cur = D.labels[key] || { label: "", reason: "" };
+      const next = cur.label === label ? "" : label;                    // same button again clears
+      const entry = { label: next, reason: reason.value };
+      if (next || entry.reason) D.labels[key] = entry; else delete D.labels[key];
+      save(key, next, reason.value); render();
+    };
+    const ok = el("button", "btn ok" + (lab.label === "✓" ? " on" : ""), "✓"), bad = el("button", "btn bad" + (lab.label === "✗" ? " on" : ""), "✗");
+    ok.onclick = () => set("✓"); bad.onclick = () => set("✗");
+    reason.onchange = () => { const cur = D.labels[key] || { label: "" }; D.labels[key] = { label: cur.label, reason: reason.value }; save(key, cur.label, reason.value); };
+    const row = el("div", "row"); row.append(ok, bad, reason);
+    card.append(meta, audio, row); cards.push(card);
+  });
+  list.replaceChildren(...cards);
+  if (q.below_threshold.length) list.append(el("div", "ctx", "Below threshold, for context only (not labelled): " +
+    q.below_threshold.map(h => `${h.score.toFixed(3)} ${h.episode} ${mmss(h.start_s)}`).join(", ")));
+  const total = D.queries.reduce((n, x) => n + x.hits.length, 0), done = D.queries.reduce((n, x) => n + x.hits.filter(h => (D.labels[keyOf(x, h)] || {}).label).length, 0);
+  $("progress").textContent = `· ${done}/${total} labelled overall`;
+}
+$("onlyTodo").onchange = render;
+fetch("/data").then(r => r.json()).then(d => { D = d; render(); });
+</script>
+</body>
+</html>

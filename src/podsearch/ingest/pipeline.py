@@ -25,6 +25,7 @@ import ray  # noqa: E402
 
 from .. import audio, lifecycle, vectors
 from ..config import get_settings
+from ..hubness import hub_score
 from ..ids import file_sha256
 from ..logs import get_logger
 from ..store import INCOMING, Store
@@ -76,8 +77,10 @@ class SpeechEmbedder:
     """Ray Data builds ONE instance per actor, so the 7.5 GB model loads once and serves many batches."""
 
     def __init__(self):
+        from ..hubness import load_centroid
         from ..models import load_speech
         self.model = load_speech()
+        self.hub_c, self.probe_sha = load_centroid()      # 4 KB file in the image: no text model at ingest
 
     def __call__(self, batch: dict) -> dict:
         is_chunk = batch["kind"] == "chunk"
@@ -89,14 +92,17 @@ class SpeechEmbedder:
                      for i in idx]
             vecs[idx] = self.model.predict(waves).detach().cpu().numpy()
         batch["vector"] = vecs
+        batch["hub"] = hub_score(vecs, self.hub_c)        # zeros for non-chunk rows: ignored by the writer
         del batch["samples"]                          # 640 KB per chunk we no longer need
         return batch
 
 
 class QdrantWriter:
     def __init__(self):
+        from ..hubness import load_centroid
         self.settings = get_settings()
         self.qc = _qdrant()
+        self.probe_sha = load_centroid()[1]
 
     def __call__(self, batch: dict) -> dict:
         written = np.zeros(len(batch["kind"]), dtype=bool)
@@ -108,11 +114,12 @@ class QdrantWriter:
             payloads = [{"chunk_index": int(batch["chunk_index"][i]), "name": str(batch["name"][i]),
                          "episode": str(batch["name"][i]).rsplit(".", 1)[0],
                          "start_s": float(batch["start_s"][i]), "end_s": float(batch["end_s"][i]),
-                         "rms_db": float(batch["rms_db"][i])} for i in rows]
+                         "rms_db": float(batch["rms_db"][i]), "hub": round(float(batch["hub"][i]), 4),
+                         "probe_sha": self.probe_sha} for i in rows]
             vectors.upsert_chunks(self.qc, self.settings.collection, sha, batch["vector"][rows], payloads)
             written[rows] = True
         batch["written"] = written
-        del batch["vector"]
+        del batch["vector"], batch["hub"]
         return batch
 
 

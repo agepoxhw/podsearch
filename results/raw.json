@@ -1,0 +1,792 @@
+{
+  "commit": "7f4fd59",
+  "k": 20,
+  "results": [
+    {
+      "query": "Putin",
+      "threshold": 0.2,
+      "model": "text_sonar_basic_encoder",
+      "hits": [
+        {
+          "score": 0.3614,
+          "name": "ep310-bustamante.mp3",
+          "episode": "ep310-bustamante",
+          "chunk_index": 178,
+          "start_s": 1780.0,
+          "end_s": 1790.0,
+          "hub": 0.0294,
+          "audio_url": "/audio/ep310-bustamante.mp3"
+        },
+        {
+          "score": 0.3529,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 139,
+          "start_s": 1390.0,
+          "end_s": 1400.0,
+          "hub": 0.1137,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.3499,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 128,
+          "start_s": 1280.0,
+          "end_s": 1290.0,
+          "hub": 0.1636,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.3336,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 69,
+          "start_s": 690.0,
+          "end_s": 700.0,
+          "hub": 0.0229,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.3335,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 125,
+          "start_s": 1250.0,
+          "end_s": 1260.0,
+          "hub": 0.0411,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.3267,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 102,
+          "start_s": 1020.0,
+          "end_s": 1030.0,
+          "hub": 0.0592,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.3152,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 127,
+          "start_s": 1270.0,
+          "end_s": 1280.0,
+          "hub": 0.0541,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.3051,
+          "name": "ep310-bustamante.mp3",
+          "episode": "ep310-bustamante",
+          "chunk_index": 174,
+          "start_s": 1740.0,
+          "end_s": 1750.0,
+          "hub": 0.1435,
+          "audio_url": "/audio/ep310-bustamante.mp3"
+        },
+        {
+          "score": 0.2944,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 106,
+          "start_s": 1060.0,
+          "end_s": 1070.0,
+          "hub": 0.0643,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.2935,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 66,
+          "start_s": 660.0,
+          "end_s": 670.0,
+          "hub": 0.0356,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.2803,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 70,
+          "start_s": 700.0,
+          "end_s": 710.0,
+          "hub": 0.0274,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.2685,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 142,
+          "start_s": 1420.0,
+          "end_s": 1430.0,
+          "hub": 0.009,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.2666,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 179,
+          "start_s": 1790.0,
+          "end_s": 1799.989,
+          "hub": 0.0198,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.2564,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 157,
+          "start_s": 1570.0,
+          "end_s": 1580.0,
+          "hub": 0.0418,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.2555,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 79,
+          "start_s": 790.0,
+          "end_s": 800.0,
+          "hub": 0.0104,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.2534,
+          "name": "ep310-bustamante.mp3",
+          "episode": "ep310-bustamante",
+          "chunk_index": 121,
+          "start_s": 1210.0,
+          "end_s": 1220.0,
+          "hub": 0.0002,
+          "audio_url": "/audio/ep310-bustamante.mp3"
+        },
+        {
+          "score": 0.2514,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 154,
+          "start_s": 1540.0,
+          "end_s": 1550.0,
+          "hub": 0.0323,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.2458,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 105,
+          "start_s": 1050.0,
+          "end_s": 1060.0,
+          "hub": 0.0065,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.245,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 63,
+          "start_s": 630.0,
+          "end_s": 640.0,
+          "hub": 0.0454,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.2363,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 155,
+          "start_s": 1550.0,
+          "end_s": 1560.0,
+          "hub": 0.0124,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        }
+      ],
+      "below_threshold": [
+        {
+          "score": 0.1988,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 148,
+          "start_s": 1480.0,
+          "end_s": 1490.0,
+          "hub": 0.1491,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.1982,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 73,
+          "start_s": 730.0,
+          "end_s": 740.0,
+          "hub": 0.12,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.1963,
+          "name": "ep310-bustamante.mp3",
+          "episode": "ep310-bustamante",
+          "chunk_index": 152,
+          "start_s": 1520.0,
+          "end_s": 1530.0,
+          "hub": 0.0214,
+          "audio_url": "/audio/ep310-bustamante.mp3"
+        },
+        {
+          "score": 0.1946,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 101,
+          "start_s": 1010.0,
+          "end_s": 1020.0,
+          "hub": 0.0423,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.1937,
+          "name": "ep310-bustamante.mp3",
+          "episode": "ep310-bustamante",
+          "chunk_index": 94,
+          "start_s": 940.0,
+          "end_s": 950.0,
+          "hub": 0.0297,
+          "audio_url": "/audio/ep310-bustamante.mp3"
+        }
+      ]
+    },
+    {
+      "query": "Ukraine",
+      "threshold": 0.2,
+      "model": "text_sonar_basic_encoder",
+      "hits": [
+        {
+          "score": 0.438,
+          "name": "ep310-bustamante.mp3",
+          "episode": "ep310-bustamante",
+          "chunk_index": 174,
+          "start_s": 1740.0,
+          "end_s": 1750.0,
+          "hub": 0.1435,
+          "audio_url": "/audio/ep310-bustamante.mp3"
+        },
+        {
+          "score": 0.2832,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 128,
+          "start_s": 1280.0,
+          "end_s": 1290.0,
+          "hub": 0.1636,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.2777,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 8,
+          "start_s": 80.0,
+          "end_s": 90.0,
+          "hub": 0.0938,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.2691,
+          "name": "ep310-bustamante.mp3",
+          "episode": "ep310-bustamante",
+          "chunk_index": 163,
+          "start_s": 1630.0,
+          "end_s": 1640.0,
+          "hub": 0.0332,
+          "audio_url": "/audio/ep310-bustamante.mp3"
+        },
+        {
+          "score": 0.24,
+          "name": "ep310-bustamante.mp3",
+          "episode": "ep310-bustamante",
+          "chunk_index": 152,
+          "start_s": 1520.0,
+          "end_s": 1530.0,
+          "hub": 0.0214,
+          "audio_url": "/audio/ep310-bustamante.mp3"
+        },
+        {
+          "score": 0.235,
+          "name": "ep310-bustamante.mp3",
+          "episode": "ep310-bustamante",
+          "chunk_index": 153,
+          "start_s": 1530.0,
+          "end_s": 1540.0,
+          "hub": 0.0273,
+          "audio_url": "/audio/ep310-bustamante.mp3"
+        },
+        {
+          "score": 0.2268,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 170,
+          "start_s": 1700.0,
+          "end_s": 1710.0,
+          "hub": 0.1577,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.226,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 73,
+          "start_s": 730.0,
+          "end_s": 740.0,
+          "hub": 0.12,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.2186,
+          "name": "ep310-bustamante.mp3",
+          "episode": "ep310-bustamante",
+          "chunk_index": 149,
+          "start_s": 1490.0,
+          "end_s": 1500.0,
+          "hub": 0.0257,
+          "audio_url": "/audio/ep310-bustamante.mp3"
+        },
+        {
+          "score": 0.2176,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 87,
+          "start_s": 870.0,
+          "end_s": 880.0,
+          "hub": 0.1209,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.2146,
+          "name": "ep310-bustamante.mp3",
+          "episode": "ep310-bustamante",
+          "chunk_index": 121,
+          "start_s": 1210.0,
+          "end_s": 1220.0,
+          "hub": 0.0002,
+          "audio_url": "/audio/ep310-bustamante.mp3"
+        },
+        {
+          "score": 0.2032,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 78,
+          "start_s": 780.0,
+          "end_s": 790.0,
+          "hub": 0.1166,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        }
+      ],
+      "below_threshold": [
+        {
+          "score": 0.1964,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 47,
+          "start_s": 470.0,
+          "end_s": 480.0,
+          "hub": 0.1735,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.1963,
+          "name": "ep310-bustamante.mp3",
+          "episode": "ep310-bustamante",
+          "chunk_index": 128,
+          "start_s": 1280.0,
+          "end_s": 1290.0,
+          "hub": -0.0026,
+          "audio_url": "/audio/ep310-bustamante.mp3"
+        },
+        {
+          "score": 0.1916,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 139,
+          "start_s": 1390.0,
+          "end_s": 1400.0,
+          "hub": 0.1137,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.1894,
+          "name": "ep310-bustamante.mp3",
+          "episode": "ep310-bustamante",
+          "chunk_index": 175,
+          "start_s": 1750.0,
+          "end_s": 1760.0,
+          "hub": 0.0078,
+          "audio_url": "/audio/ep310-bustamante.mp3"
+        },
+        {
+          "score": 0.1882,
+          "name": "ep310-bustamante.mp3",
+          "episode": "ep310-bustamante",
+          "chunk_index": 139,
+          "start_s": 1390.0,
+          "end_s": 1400.0,
+          "hub": 0.0058,
+          "audio_url": "/audio/ep310-bustamante.mp3"
+        }
+      ]
+    },
+    {
+      "query": "Middle East",
+      "threshold": 0.2,
+      "model": "text_sonar_basic_encoder",
+      "hits": [
+        {
+          "score": 0.3102,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 87,
+          "start_s": 870.0,
+          "end_s": 880.0,
+          "hub": 0.1209,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.2789,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 73,
+          "start_s": 730.0,
+          "end_s": 740.0,
+          "hub": 0.12,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.2376,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 76,
+          "start_s": 760.0,
+          "end_s": 770.0,
+          "hub": 0.1464,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.2276,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 128,
+          "start_s": 1280.0,
+          "end_s": 1290.0,
+          "hub": 0.1636,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.2217,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 78,
+          "start_s": 780.0,
+          "end_s": 790.0,
+          "hub": 0.1166,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.2179,
+          "name": "ep310-bustamante.mp3",
+          "episode": "ep310-bustamante",
+          "chunk_index": 174,
+          "start_s": 1740.0,
+          "end_s": 1750.0,
+          "hub": 0.1435,
+          "audio_url": "/audio/ep310-bustamante.mp3"
+        },
+        {
+          "score": 0.2122,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 170,
+          "start_s": 1700.0,
+          "end_s": 1710.0,
+          "hub": 0.1577,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        }
+      ],
+      "below_threshold": [
+        {
+          "score": 0.1991,
+          "name": "ep310-bustamante.mp3",
+          "episode": "ep310-bustamante",
+          "chunk_index": 177,
+          "start_s": 1770.0,
+          "end_s": 1780.0,
+          "hub": 0.1755,
+          "audio_url": "/audio/ep310-bustamante.mp3"
+        },
+        {
+          "score": 0.197,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 64,
+          "start_s": 640.0,
+          "end_s": 650.0,
+          "hub": 0.0428,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.1952,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 137,
+          "start_s": 1370.0,
+          "end_s": 1380.0,
+          "hub": 0.085,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.1949,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 104,
+          "start_s": 1040.0,
+          "end_s": 1050.0,
+          "hub": 0.1145,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.1923,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 100,
+          "start_s": 1000.0,
+          "end_s": 1010.0,
+          "hub": 0.0563,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        }
+      ]
+    },
+    {
+      "query": "Iran",
+      "threshold": 0.2,
+      "model": "text_sonar_basic_encoder",
+      "hits": [
+        {
+          "score": 0.3772,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 170,
+          "start_s": 1700.0,
+          "end_s": 1710.0,
+          "hub": 0.1577,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.2835,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 112,
+          "start_s": 1120.0,
+          "end_s": 1130.0,
+          "hub": 0.0497,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.2813,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 73,
+          "start_s": 730.0,
+          "end_s": 740.0,
+          "hub": 0.12,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.2646,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 78,
+          "start_s": 780.0,
+          "end_s": 790.0,
+          "hub": 0.1166,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.2639,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 137,
+          "start_s": 1370.0,
+          "end_s": 1380.0,
+          "hub": 0.085,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.252,
+          "name": "ep310-bustamante.mp3",
+          "episode": "ep310-bustamante",
+          "chunk_index": 174,
+          "start_s": 1740.0,
+          "end_s": 1750.0,
+          "hub": 0.1435,
+          "audio_url": "/audio/ep310-bustamante.mp3"
+        },
+        {
+          "score": 0.2503,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 128,
+          "start_s": 1280.0,
+          "end_s": 1290.0,
+          "hub": 0.0537,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.2451,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 165,
+          "start_s": 1650.0,
+          "end_s": 1660.0,
+          "hub": 0.0405,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.2448,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 128,
+          "start_s": 1280.0,
+          "end_s": 1290.0,
+          "hub": 0.1636,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.2335,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 139,
+          "start_s": 1390.0,
+          "end_s": 1400.0,
+          "hub": 0.0678,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.2314,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 168,
+          "start_s": 1680.0,
+          "end_s": 1690.0,
+          "hub": 0.0529,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.2192,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 179,
+          "start_s": 1790.0,
+          "end_s": 1799.989,
+          "hub": 0.0548,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.2136,
+          "name": "ep289-kotkin.mp3",
+          "episode": "ep289-kotkin",
+          "chunk_index": 87,
+          "start_s": 870.0,
+          "end_s": 880.0,
+          "hub": 0.1209,
+          "audio_url": "/audio/ep289-kotkin.mp3"
+        },
+        {
+          "score": 0.2091,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 177,
+          "start_s": 1770.0,
+          "end_s": 1780.0,
+          "hub": 0.0289,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.2034,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 129,
+          "start_s": 1290.0,
+          "end_s": 1300.0,
+          "hub": 0.0462,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.2011,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 131,
+          "start_s": 1310.0,
+          "end_s": 1320.0,
+          "hub": 0.0541,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        }
+      ],
+      "below_threshold": [
+        {
+          "score": 0.1998,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 166,
+          "start_s": 1660.0,
+          "end_s": 1670.0,
+          "hub": 0.0151,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.1926,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 61,
+          "start_s": 610.0,
+          "end_s": 620.0,
+          "hub": 0.0496,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.187,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 148,
+          "start_s": 1480.0,
+          "end_s": 1490.0,
+          "hub": 0.1491,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.1859,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 126,
+          "start_s": 1260.0,
+          "end_s": 1270.0,
+          "hub": 0.0321,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        },
+        {
+          "score": 0.1849,
+          "name": "ep334-amanat.mp3",
+          "episode": "ep334-amanat",
+          "chunk_index": 0,
+          "start_s": 0.0,
+          "end_s": 10.0,
+          "hub": 0.0419,
+          "audio_url": "/audio/ep334-amanat.mp3"
+        }
+      ]
+    }
+  ]
+}
