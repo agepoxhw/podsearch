@@ -41,12 +41,17 @@ helm dependency build charts/podsearch >/dev/null
 # Helm installs a chart's crds/ only on first install, never on upgrade, so apply them ourselves.
 # --server-side: the RayCluster CRD is too big for the client-side "last-applied" annotation.
 helm show crds charts/podsearch/charts/kuberay-operator-*.tgz | kubectl apply --server-side -f - >/dev/null
-source .build/images.env   # written by build-images.sh: ML_BASE_IMAGE, ML_SPEECH_IMAGE, ...
+source .build/images.env   # written by build-images.sh: ML_APP_IMAGE, ML_SPEECH_IMAGE, ...
 # --force-conflicts: the Ray autoscaler edits spec.workerGroupSpecs and so owns it; Helm takes it back on
 # each run and the autoscaler re-adjusts within seconds. Without the flag, upgrade fails on a field conflict.
-helm upgrade --install podsearch charts/podsearch --namespace "$NS" --wait --force-conflicts \
-  --set images.mlBase="$ML_BASE_IMAGE" \
+# No --wait: Helm would wait for the RayCluster, which cannot become ready until the pods are rolled below.
+# wait-ready.sh does the waiting instead.
+helm upgrade --install podsearch charts/podsearch --namespace "$NS" --force-conflicts \
+  --set images.mlApp="$ML_APP_IMAGE" \
   --set images.mlSpeech="$ML_SPEECH_IMAGE"
+# KubeRay does NOT roll existing Ray pods when the RayCluster's pod template changes (it logs
+# shouldDelete=false). So delete any Ray pod whose image differs from the spec; the operator recreates it.
+scripts/roll-ray.sh
 done_
 
 stage 5 "wait until ready"

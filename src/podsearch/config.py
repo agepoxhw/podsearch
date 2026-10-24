@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     score_threshold: float = 0.20            # true cosine, see CLAUDE.md
     max_attempts: int = 3                    # failures before a file moves to rejected/
 
+    embed_actors_max: int = 1                # Ray Data actor pool upper bound (each actor = one loaded model)
+    embed_batch_size: int = 8                # chunks per model call
+
 
 @lru_cache
 def get_settings() -> Settings:

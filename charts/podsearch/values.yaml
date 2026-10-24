@@ -42,11 +42,12 @@ qdrant:
 # Our own images. No defaults on purpose: `make up` passes the content-hash tags from
 # .build/images.env, and the chart fails if they are missing (never a stale or `latest` image).
 images:
-  mlBase: ""
+  mlApp: ""
   mlSpeech: ""
 
 # Ray cluster (the CR is rendered by templates/raycluster.yaml; KubeRay turns it into pods).
 ray:
+  embedActorsMax: 1       # embedder actors = loaded models; 2 needs two workers (RAM budget, see DECISIONS)
   head:
     resources:
       requests: {cpu: 250m, memory: 1Gi}

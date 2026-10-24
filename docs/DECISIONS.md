@@ -113,3 +113,14 @@ The Phase 4 subscriber depends on these.
 | Weights download | BuildKit cache mount (`id=fairseq2-<kind>`) in both model Dockerfiles | Removes the network dependency on rebuilds. Measured: base change still costs about 8 min (local 8 GB layer rebuild), 0 bytes downloaded. A separate weights image or a weights PVC would be alternatives (PVC rejected for now: "no runtime downloads" and clean-clone reproducibility). `docker builder prune` also empties the mount. |
 | pyarrow | pinned 25.0.0 | See journal. |
 | Disk | Done: Colima disk grown to 200 GB, `make clean-images` added, `prereqs.sh` requires 50 GB free on Docker's disk | Each image generation is about 10 GB on the host plus registry and node copies. |
+
+### Phase 4b decisions
+| Topic | Decision | Why / alternatives rejected |
+|---|---|---|
+| Head image | New `ml-app` (ml-base + src) for the head. Workers use ml-speech. | Driver imports our code. Rejected: weights on the head (7.5 GB unused), `runtime_env working_dir` (code not pinned to an image tag). |
+| Rolling Ray pods | `scripts/roll-ray.sh`, Helm without `--wait` | KubeRay never replaces running pods after a template change. At scale: a new cluster per version (`RayService` upgrade). |
+| Row schema | One schema with a `kind` column (chunk, error, duplicate, finish_move, gone), samples as bytes | Ray Data needs a uniform schema. Failures become rows, so one bad file can't kill the job. |
+| Embedder actors | `EMBED_ACTORS_MAX=1`, 3 CPUs per actor | Two models need two workers, which exceed the 20 GiB VM at the placeholder limits. Revisit after measuring RSS. |
+| Finalize | Runs as a `finalize` Ray task on a worker (0.25 CPU). The driver only counts chunks and dispatches. | User's suggestion. The head still imports our code to reference the task; this only moves execution. Idempotent steps make a dead task safe to repeat. |
+| Ray Data autoscaler | Utilization-triggered scale-up switched off (threshold 1.1) | It added an idle second worker every few minutes. Real demand still scales. |
+| Worker memory | Measured 6.2 GiB RSS. To tune: request about 7Gi, limit about 9Gi (needs a pod delete to take effect) | Two workers must fit the 19 GB VM with Qdrant, SeaweedFS and the head. |

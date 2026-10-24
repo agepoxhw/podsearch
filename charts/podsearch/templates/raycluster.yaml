@@ -1,5 +1,5 @@
 {{- /* One Ray cluster. KubeRay watches this object and creates the head pod, worker pods and the autoscaler sidecar. */ -}}
-{{- $base := required "set images.mlBase (make up passes it)" .Values.images.mlBase -}}
+{{- $app := required "set images.mlApp (make up passes it)" .Values.images.mlApp -}}
 {{- $speech := required "set images.mlSpeech (make up passes it)" .Values.images.mlSpeech -}}
 {{- define "podsearch.rayPodSecurity" }}
 securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000}
@@ -23,12 +23,13 @@ spec:
         {{- include "podsearch.rayPodSecurity" . | nindent 8 }}
         containers:
           - name: ray-head
-            image: {{ $base }}
+            image: {{ $app }}
             imagePullPolicy: IfNotPresent
             ports:
               - {containerPort: 6379, name: gcs}
               - {containerPort: 8265, name: dashboard}
               - {containerPort: 10001, name: client}
+            env: {{- include "podsearch.appEnv" . | nindent 14 }}
             resources: {{- toYaml .Values.ray.head.resources | nindent 14 }}
             # The image has no wget/curl, so these call the same Ray health endpoints with Python's urllib.
             readinessProbe: &probe
@@ -59,6 +60,7 @@ spec:
             - name: ray-worker
               image: {{ $speech }}
               imagePullPolicy: IfNotPresent
+              env: {{- include "podsearch.appEnv" . | nindent 16 }}
               volumeMounts:
                 - {name: shm, mountPath: /dev/shm}
               resources: {{- toYaml .Values.ray.worker.resources | nindent 16 }}

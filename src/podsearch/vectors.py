@@ -39,3 +39,20 @@ def delete_file(client: QdrantClient, name: str, file_id: str) -> None:
 def search(client: QdrantClient, name: str, query_vec: np.ndarray, k: int, threshold: float):
     return client.query_points(name, query=normalize(query_vec).tolist(), limit=k,
                                score_threshold=threshold, with_payload=True).points
+
+
+def _match(key: str, value: str) -> models.FieldCondition:
+    return models.FieldCondition(key=key, match=models.MatchValue(value=value))
+
+
+def indexed_name(client: QdrantClient, name: str, file_id: str) -> "str | None":
+    """The file name this content hash is indexed under, or None if it isn't indexed at all."""
+    points, _ = client.scroll(name, scroll_filter=models.Filter(must=[_match("file_id", file_id)]),
+                              limit=1, with_payload=["name"])
+    return points[0].payload["name"] if points else None
+
+
+def delete_other_versions(client: QdrantClient, name: str, file_name: str, keep_file_id: str) -> None:
+    """A new version of `file_name` was indexed: drop points of older content under the same name."""
+    client.delete(name, points_selector=models.FilterSelector(filter=models.Filter(
+        must=[_match("name", file_name)], must_not=[_match("file_id", keep_file_id)])), wait=True)
