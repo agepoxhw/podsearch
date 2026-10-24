@@ -8,9 +8,9 @@ dependencies:
   - name: qdrant
     version: 1.19.2
     repository: https://qdrant.github.io/qdrant-helm
-  - name: seaweedfs
-    version: 4.48.0
-    repository: https://seaweedfs.github.io/seaweedfs/helm
+  - name: rustfs
+    version: 1.0.3
+    repository: https://charts.rustfs.com
   - name: kuberay-operator
     version: 1.7.1
     repository: https://ray-project.github.io/kuberay-helm/

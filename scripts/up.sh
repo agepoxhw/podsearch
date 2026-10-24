@@ -21,12 +21,22 @@ done_
 stage 2 "namespace and secrets"
 kubectl create namespace "$NS" --dry-run=client -o yaml | kubectl apply -f -
 # Generated once. Never overwritten, so a re-run doesn't rotate credentials under running pods.
+# access_key/secret_key are read by our code; RUSTFS_* are the names the RustFS pod expects (same values).
 if ! kubectl -n "$NS" get secret s3-credentials >/dev/null 2>&1; then
+  SECRET_KEY="$(openssl rand -hex 16)"
   kubectl -n "$NS" create secret generic s3-credentials \
-    --from-literal=access_key=podsearch \
-    --from-literal=secret_key="$(openssl rand -hex 16)"
+    --from-literal=access_key=podsearch --from-literal=secret_key="$SECRET_KEY" \
+    --from-literal=RUSTFS_ACCESS_KEY=podsearch --from-literal=RUSTFS_SECRET_KEY="$SECRET_KEY"
 else
   echo "secret s3-credentials already exists, keeping it"
+  # Older clusters (SeaweedFS era) lack the RUSTFS_* keys: add them, copying the existing values.
+  if [ -z "$(kubectl -n "$NS" get secret s3-credentials -o jsonpath='{.data.RUSTFS_ACCESS_KEY}')" ]; then
+    kubectl -n "$NS" patch secret s3-credentials -p "{\"data\":{\"RUSTFS_ACCESS_KEY\":\"$(kubectl -n "$NS" get secret s3-credentials -o jsonpath='{.data.access_key}')\",\"RUSTFS_SECRET_KEY\":\"$(kubectl -n "$NS" get secret s3-credentials -o jsonpath='{.data.secret_key}')\"}}"
+  fi
+fi
+# Bearer token RustFS sends with every webhook call; the controller rejects calls without it.
+if ! kubectl -n "$NS" get secret webhook-token >/dev/null 2>&1; then
+  kubectl -n "$NS" create secret generic webhook-token --from-literal=token="$(openssl rand -hex 16)"
 fi
 done_
 
@@ -36,7 +46,7 @@ scripts/build-images.sh
 done_
 
 stage 4 "deploy chart"
-# Sub-charts (Qdrant, SeaweedFS) are not committed; fetch the exact versions pinned in Chart.lock.
+# Sub-charts (Qdrant, RustFS, KubeRay) are not committed; fetch the exact versions pinned in Chart.lock.
 helm dependency build charts/podsearch >/dev/null
 # Helm installs a chart's crds/ only on first install, never on upgrade, so apply them ourselves.
 # --server-side: the RayCluster CRD is too big for the client-side "last-applied" annotation.
@@ -48,7 +58,9 @@ source .build/images.env   # written by build-images.sh: ML_APP_IMAGE, ML_SPEECH
 # wait-ready.sh does the waiting instead.
 helm upgrade --install podsearch charts/podsearch --namespace "$NS" --force-conflicts \
   --set images.mlApp="$ML_APP_IMAGE" \
-  --set images.mlSpeech="$ML_SPEECH_IMAGE"
+  --set images.mlSpeech="$ML_SPEECH_IMAGE" \
+  --set images.mlText="$ML_TEXT_IMAGE" \
+  --set images.searchApi="$SEARCH_API_IMAGE"
 # KubeRay does NOT roll existing Ray pods when the RayCluster's pod template changes (it logs
 # shouldDelete=false). So delete any Ray pod whose image differs from the spec; the operator recreates it.
 scripts/roll-ray.sh

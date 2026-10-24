@@ -9,7 +9,7 @@ agents: 0
 ports:
   - port: 8080:30080   # search-api + UI
     nodeFilters: [loadbalancer]
-  - port: 8333:30333   # SeaweedFS S3
+  - port: 8333:30333   # RustFS S3 (NodePort 30333 -> :9000)
     nodeFilters: [loadbalancer]
   - port: 8265:30265   # Ray dashboard
     nodeFilters: [loadbalancer]

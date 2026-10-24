@@ -28,6 +28,8 @@ SRC_HASH=$(tree_hash src)
 APP_TAG=$(echo "$BASE_TAG $SRC_HASH $(hash_of images/ml-app/Dockerfile)" | shasum -a 256 | cut -c1-12)
 SPEECH_TAG=$(echo "$BASE_TAG $SRC_HASH $(hash_of images/ml-speech/Dockerfile)" | shasum -a 256 | cut -c1-12)
 TEXT_TAG=$(echo "$BASE_TAG $SRC_HASH $(hash_of images/ml-text/Dockerfile)" | shasum -a 256 | cut -c1-12)
+# search-api does not depend on ml-base: its inputs are its own Dockerfile, lock file and our code.
+API_TAG=$(echo "$SRC_HASH $(hash_of images/search-api/Dockerfile "images/search-api/requirements.$ARCH.txt")" | shasum -a 256 | cut -c1-12)
 
 echo "images for $PLATFORM"
 build ml-base "$BASE_TAG"
@@ -35,6 +37,7 @@ build ml-base "$BASE_TAG"
 build ml-app "$APP_TAG" --build-arg "BASE=$REG_PUSH/ml-base:$BASE_TAG"
 build ml-speech "$SPEECH_TAG" --build-arg "BASE=$REG_PUSH/ml-base:$BASE_TAG"
 build ml-text "$TEXT_TAG" --build-arg "BASE=$REG_PUSH/ml-base:$BASE_TAG"
+build search-api "$API_TAG"
 
 mkdir -p .build
 cat > .build/images.env <<ENV
@@ -42,5 +45,6 @@ ML_BASE_IMAGE=$REG_POD/ml-base:$BASE_TAG
 ML_APP_IMAGE=$REG_POD/ml-app:$APP_TAG
 ML_SPEECH_IMAGE=$REG_POD/ml-speech:$SPEECH_TAG
 ML_TEXT_IMAGE=$REG_POD/ml-text:$TEXT_TAG
+SEARCH_API_IMAGE=$REG_POD/search-api:$API_TAG
 ENV
 cat .build/images.env

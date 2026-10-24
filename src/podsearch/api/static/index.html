@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Podcast search</title>
+<style>
+  body { font: 16px/1.4 system-ui, sans-serif; max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
+  form { display: flex; gap: .5rem; }
+  input[type=search] { flex: 1; padding: .5rem; font-size: 1rem; }
+  button { padding: .5rem 1rem; font-size: 1rem; }
+  .opts { margin: .5rem 0 1rem; color: #555; font-size: .9rem; }
+  .hit { border-top: 1px solid #ddd; padding: .75rem 0; }
+  .meta { display: flex; gap: 1rem; align-items: baseline; flex-wrap: wrap; }
+  .score { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .low { color: #999; }
+  audio { width: 100%; margin-top: .4rem; }
+  #status { color: #555; margin: .5rem 0; }
+  #status.err { color: #b00020; }
+</style>
+</head>
+<body>
+<h1>Podcast search</h1>
+<form id="f">
+  <input id="q" type="search" placeholder="Search what was said, e.g. Iran" maxlength="500" autofocus required>
+  <button>Search</button>
+</form>
+<div class="opts">
+  <label>Results <input id="k" type="number" min="1" max="50" value="10" style="width:4rem"></label>
+  <label style="margin-left:1rem"><input id="below" type="checkbox"> show below-threshold hits (debug)</label>
+</div>
+<div id="status"></div>
+<div id="results"></div>
+<script>
+const $ = id => document.getElementById(id);
+const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+const THRESHOLD = 0.20;
+
+$("f").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const status = $("status"), out = $("results");
+  status.className = ""; status.textContent = "Searching…"; out.replaceChildren();
+  const params = new URLSearchParams({ q: $("q").value, k: $("k").value });
+  if ($("below").checked) params.set("below_threshold", "true");
+  let r;
+  try { r = await fetch("/search?" + params); } catch (e) { status.className = "err"; status.textContent = "Cannot reach the API."; return; }
+  const body = await r.json();
+  if (!r.ok) {
+    const wait = r.headers.get("Retry-After");
+    status.className = "err";
+    status.textContent = body.error + (wait ? ` (try again in ${wait}s)` : "");
+    return;
+  }
+  status.textContent = body.hits.length ? `${body.hits.length} hits` : "No hits above the threshold (0.20).";
+  for (const h of body.hits) {
+    const div = document.createElement("div"); div.className = "hit";
+    const meta = document.createElement("div"); meta.className = "meta";
+    const score = document.createElement("span");
+    score.className = "score" + (h.score < THRESHOLD ? " low" : ""); score.textContent = h.score.toFixed(3);
+    const ep = document.createElement("strong"); ep.textContent = h.episode;
+    const t = document.createElement("span"); t.textContent = `${mmss(h.start_s)} – ${mmss(h.end_s)}`;
+    meta.append(score, ep, t);
+    const audio = document.createElement("audio");
+    audio.controls = true; audio.preload = "none";
+    audio.src = `${h.audio_url}#t=${h.start_s},${h.end_s}`;
+    div.append(meta, audio); out.append(div);
+  }
+});
+</script>
+</body>
+</html>

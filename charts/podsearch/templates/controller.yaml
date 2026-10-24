@@ -1,0 +1,41 @@
+{{- /* The ingest controller: watches incoming/, submits Ray jobs. One replica, Recreate: two controllers would
+       double-submit, and the in-memory queue lives in the pod. */ -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: controller
+spec:
+  replicas: 1
+  strategy: {type: Recreate}
+  selector: {matchLabels: {app: controller}}
+  template:
+    metadata:
+      labels: {app: controller}
+      annotations: {prometheus.io/scrape: "true", prometheus.io/port: "8000", prometheus.io/path: /metrics}
+    spec:
+      securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000}
+      containers:
+        - name: controller
+          image: {{ required "set images.mlApp (make up passes it)" .Values.images.mlApp }}
+          imagePullPolicy: IfNotPresent
+          command: [python, -m, podsearch.ingest.controller]
+          env: {{- include "podsearch.appEnv" . | nindent 12 }}
+            - name: WEBHOOK_TOKEN
+              valueFrom: {secretKeyRef: {name: webhook-token, key: token}}
+            - {name: EVENT_SOURCE, value: {{ .Values.controller.eventSource | quote }}}
+            - {name: RECONCILE_INTERVAL, value: {{ .Values.controller.reconcileInterval | quote }}}
+          ports: [{containerPort: 8000, name: http}]
+          resources: {{- toYaml .Values.controller.resources | nindent 12 }}
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+          startupProbe: {httpGet: {path: /healthz, port: http}, periodSeconds: 3, failureThreshold: 20}
+          readinessProbe: {httpGet: {path: /readyz, port: http}, periodSeconds: 10}
+          livenessProbe: {httpGet: {path: /healthz, port: http}, periodSeconds: 20, failureThreshold: 3}
+---
+# RustFS posts bucket notifications to http://controller:8000/events
+apiVersion: v1
+kind: Service
+metadata:
+  name: controller
+spec:
+  selector: {app: controller}
+  ports: [{name: http, port: 8000, targetPort: http}]

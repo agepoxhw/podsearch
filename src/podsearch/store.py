@@ -48,6 +48,13 @@ class Store:
             keys += [o["Key"] for o in page.get("Contents", [])]
         return keys
 
+    def list_objects(self, prefix: str) -> list[tuple[str, datetime]]:
+        """(key, last_modified) pairs; the controller uses the age of the oldest as the ingest-lag metric."""
+        out = []
+        for page in self.s3.get_paginator("list_objects_v2").paginate(Bucket=self.bucket, Prefix=prefix):
+            out += [(o["Key"], o["LastModified"]) for o in page.get("Contents", [])]
+        return out
+
     def exists(self, key: str) -> bool:
         try:
             self.s3.head_object(Bucket=self.bucket, Key=key)

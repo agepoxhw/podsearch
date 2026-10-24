@@ -30,6 +30,9 @@ load: upload-all    ## alias: load the sample data set
 ls:                 ## list the bucket (incoming/, library/, rejected/)
 	@kubectl -n podsearch exec deploy/toolbox -- aws s3 ls s3://podcasts/ --recursive --human-readable
 
+hubness:           ## score chunks for the hub filter (run after ingest): needs the embedder up
+	@kubectl -n podsearch exec deploy/controller -- python -m podsearch.hubness
+
 lock:               ## regenerate images/ml-base/requirements.<arch>.txt
 	@scripts/lock.sh
 

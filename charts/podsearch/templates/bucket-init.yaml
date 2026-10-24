@@ -1,0 +1,38 @@
+{{- /* After every install/upgrade: make sure the bucket exists and its notification rule is attached.
+       Both calls are idempotent (PutBucketNotificationConfiguration replaces the whole rule set). */ -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: bucket-init
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 6
+  template:
+    spec:
+      restartPolicy: OnFailure
+      securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000}
+      containers:
+        - name: init
+          image: {{ .Values.awscli.image }}
+          command: [/bin/sh, -ec]
+          args:
+            - |
+              until aws s3api list-buckets >/dev/null 2>&1; do echo "waiting for RustFS"; sleep 3; done
+              aws s3api head-bucket --bucket podcasts 2>/dev/null || aws s3 mb s3://podcasts
+              aws s3api put-bucket-notification-configuration --bucket podcasts --notification-configuration \
+                '{"QueueConfigurations":[{"Id":"incoming","QueueArn":"arn:rustfs:sqs:us-east-1:primary:webhook","Events":["s3:ObjectCreated:*"],"Filter":{"Key":{"FilterRules":[{"Name":"prefix","Value":"incoming/"}]}}}]}'
+              echo "bucket ready, notifications attached"
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom: {secretKeyRef: {name: s3-credentials, key: access_key}}
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom: {secretKeyRef: {name: s3-credentials, key: secret_key}}
+            - {name: AWS_DEFAULT_REGION, value: us-east-1}
+            - {name: AWS_ENDPOINT_URL, value: "http://rustfs:9000"}
+            - {name: HOME, value: /tmp}
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {memory: 256Mi}
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}

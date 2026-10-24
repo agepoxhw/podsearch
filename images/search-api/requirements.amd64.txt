@@ -1,0 +1,103 @@
+annotated-doc==0.0.5
+    # via fastapi
+annotated-types==0.8.0
+    # via pydantic
+anyio==4.15.1
+    # via
+    #   httpx
+    #   starlette
+boto3==1.43.118
+    # via -r images/search-api/requirements.in
+botocore==1.43.118
+    # via
+    #   boto3
+    #   s3transfer
+certifi==2026.10.23
+    # via
+    #   httpcore
+    #   httpx
+click==8.5.0
+    # via uvicorn
+fastapi==0.162.0
+    # via -r images/search-api/requirements.in
+grpcio==1.84.1
+    # via qdrant-client
+h11==0.16.0
+    # via
+    #   httpcore
+    #   uvicorn
+h2==4.4.1
+    # via httpx
+hpack==4.2.0
+    # via h2
+httpcore==1.0.9
+    # via httpx
+httpx==0.28.1
+    # via
+    #   -r images/search-api/requirements.in
+    #   qdrant-client
+hyperframe==6.1.0
+    # via h2
+idna==3.20
+    # via
+    #   anyio
+    #   httpx
+jmespath==1.1.0
+    # via
+    #   boto3
+    #   botocore
+numpy==1.26.4
+    # via
+    #   -r images/search-api/requirements.in
+    #   qdrant-client
+opentelemetry-api==1.45.1
+    # via fastapi
+portalocker==4.4.1
+    # via qdrant-client
+prometheus-client==0.26.0
+    # via -r images/search-api/requirements.in
+protobuf==7.36.2
+    # via qdrant-client
+pydantic==2.14.1
+    # via
+    #   fastapi
+    #   pydantic-settings
+    #   qdrant-client
+pydantic-core==2.50.1
+    # via pydantic
+pydantic-settings==2.16.1
+    # via -r images/search-api/requirements.in
+python-dateutil==2.9.0.post0
+    # via botocore
+python-dotenv==1.2.4
+    # via pydantic-settings
+qdrant-client==1.20.0
+    # via -r images/search-api/requirements.in
+s3transfer==0.19.3
+    # via boto3
+six==1.17.0
+    # via python-dateutil
+starlette==1.10.0
+    # via fastapi
+typing-extensions==4.16.0
+    # via
+    #   anyio
+    #   fastapi
+    #   grpcio
+    #   opentelemetry-api
+    #   pydantic
+    #   pydantic-core
+    #   pydantic-settings
+    #   starlette
+    #   typing-inspection
+typing-inspection==0.4.4
+    # via
+    #   fastapi
+    #   pydantic
+    #   pydantic-settings
+urllib3==2.8.0
+    # via
+    #   botocore
+    #   qdrant-client
+uvicorn==0.54.0
+    # via -r images/search-api/requirements.in

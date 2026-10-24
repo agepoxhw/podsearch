@@ -1,4 +1,4 @@
-# Toolbox: an idle pod with aws-cli already pointed at SeaweedFS, so reviewers need no aws-cli on
+# Toolbox: an idle pod with aws-cli already pointed at RustFS, so reviewers need no aws-cli on
 # their host. `make upload` does `kubectl cp` into it, then `aws s3 cp` from inside the cluster.
 apiVersion: apps/v1
 kind: Deployment
@@ -23,7 +23,7 @@ spec:
             - name: AWS_SECRET_ACCESS_KEY
               valueFrom: {secretKeyRef: {name: s3-credentials, key: secret_key}}
             - {name: AWS_DEFAULT_REGION, value: us-east-1}
-            - {name: AWS_ENDPOINT_URL, value: "http://seaweedfs-s3:8333"}   # honoured by aws-cli v2
+            - {name: AWS_ENDPOINT_URL, value: "http://rustfs:9000"}   # honoured by aws-cli v2
             - {name: HOME, value: /tmp}
           readinessProbe:
             exec: {command: [aws, --version]}

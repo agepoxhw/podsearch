@@ -3,32 +3,31 @@ clusterName: podsearch
 
 # Sub-chart values: each key must match a dependency name in Chart.yaml.
 
-# SeaweedFS (official chart) in all-in-one mode = a single `weed server -filer -s3` pod.
-seaweedfs:
-  fullnameOverride: seaweedfs
-  master: {enabled: false}    # all-in-one replaces the separate master/volume/filer pods
-  volume: {enabled: false}
-  filer: {enabled: false}
-  allInOne:
-    enabled: true
-    s3:
-      enabled: true
-      enableAuth: true
-      createBuckets:
-        - name: podcasts
-    data:
-      type: persistentVolumeClaim
-      size: 10Gi
-    resources:
-      requests: {cpu: 100m, memory: 256Mi}
-      limits: {memory: 1Gi}
-  s3:
-    # Reuse the Secret that `make up` generates once (keys access_key / secret_key).
-    credentials:
-      admin:
-        existingSecret: s3-credentials
-        accessKeyKey: access_key
-        secretKeyKey: secret_key
+# RustFS (official chart), standalone = one pod serving the S3 API on :9000 with a PVC.
+# Bucket notifications are enabled here (webhook target "primary" -> our controller); the notification rule on
+# the bucket is attached by templates/bucket-init.yaml. Credentials come from the Secret `make up` creates once.
+rustfs:
+  fullnameOverride: rustfs          # stable Service name: rustfs:9000 (chart appends -svc, see templates/rustfs-s3.yaml)
+  mode:
+    standalone: {enabled: true}
+    distributed: {enabled: false}
+  replicaCount: 1
+  secret:
+    existingSecret: s3-credentials  # needs keys RUSTFS_ACCESS_KEY / RUSTFS_SECRET_KEY
+  storageclass:
+    dataStorageSize: 10Gi
+    logStorageSize: 256Mi
+  resources:
+    requests: {cpu: 100m, memory: 256Mi}
+    limits: {memory: 1Gi}
+  extraEnv:
+    - {name: RUSTFS_NOTIFY_ENABLE, value: "true"}
+    - {name: RUSTFS_NOTIFY_WEBHOOK_ENABLE_PRIMARY, value: "on"}
+    - {name: RUSTFS_NOTIFY_WEBHOOK_ENDPOINT_PRIMARY, value: "http://controller:8000/events"}
+    - name: RUSTFS_NOTIFY_WEBHOOK_AUTH_TOKEN_PRIMARY
+      valueFrom: {secretKeyRef: {name: webhook-token, key: token}}
+    - {name: RUSTFS_NOTIFY_WEBHOOK_QUEUE_DIR_PRIMARY, value: /data/notify-primary}   # undelivered events wait here
+    - {name: RUSTFS_OUTBOUND_ALLOW_ORIGINS, value: "http://controller:8000"}
 
 qdrant:
   fullnameOverride: qdrant          # stable Service name: qdrant:6333
@@ -41,9 +40,33 @@ qdrant:
 
 # Our own images. No defaults on purpose: `make up` passes the content-hash tags from
 # .build/images.env, and the chart fails if they are missing (never a stale or `latest` image).
+controller:
+  eventSource: webhook       # webhook | none (none = events ignored, reconcile only)
+  reconcileInterval: 300
+  resources:
+    requests: {cpu: 50m, memory: 128Mi}
+    limits: {cpu: 500m, memory: 384Mi}
+
 images:
   mlApp: ""
   mlSpeech: ""
+  mlText: ""
+  searchApi: ""
+
+# Query embedder (ml-text image). One replica: each replica holds a model copy and memory fits only one.
+# Memory measured (cgroup memory.peak): 6.66 GiB peak while loading, ~3.85 GiB after. The limit must cover the
+# load peak: 6Gi was OOMKilled 6 s after start.
+embedder:
+  resources:
+    requests: {cpu: "1", memory: 4Gi}
+    limits: {cpu: "2", memory: 8Gi}
+
+# Search API: stateless and light (no model), so 2 replicas show it scales out; throughput is capped by the embedder.
+searchApi:
+  replicas: 2
+  resources:
+    requests: {cpu: 100m, memory: 128Mi}
+    limits: {cpu: 500m, memory: 256Mi}
 
 # Ray cluster (the CR is rendered by templates/raycluster.yaml; KubeRay turns it into pods).
 ray:
@@ -55,9 +78,9 @@ ray:
   worker:
     minReplicas: 1
     maxReplicas: 2
-    resources:               # placeholder: tuned from a measured speech-only worker
-      requests: {cpu: "3", memory: 8Gi}
-      limits: {cpu: "4", memory: 12Gi}
+    resources:               # measured: ~6.2 GiB RSS while embedding
+      requests: {cpu: "3", memory: 7Gi}
+      limits: {cpu: "4", memory: 9Gi}
   autoscaler:
     resources:
       requests: {cpu: 50m, memory: 128Mi}

@@ -2,11 +2,11 @@ dependencies:
 - name: qdrant
   repository: https://qdrant.github.io/qdrant-helm
   version: 1.19.2
-- name: seaweedfs
-  repository: https://seaweedfs.github.io/seaweedfs/helm
-  version: 4.48.0
+- name: rustfs
+  repository: https://charts.rustfs.com
+  version: 1.0.3
 - name: kuberay-operator
   repository: https://ray-project.github.io/kuberay-helm/
   version: 1.7.1
-digest: sha256:e7ad93ae0aae91b65350dd5322d8640df4bbfd6683925379613c588ffd02ee2a
-generated: "2026-10-24T17:41:54.505188+03:00"
+digest: sha256:f071633f9d10a6881e2ff2e71b441dd9bee36f2ceb30f3fbb1dc510f0246bae9
+generated: "2026-10-24T22:23:42.451735+03:00"

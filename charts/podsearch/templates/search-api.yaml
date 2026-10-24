@@ -1,0 +1,39 @@
+{{- /* The search API: /search, /audio, the UI. Stateless, so RollingUpdate and several replicas are fine.
+       /readyz checks local things only (not Qdrant or the embedder): if every pod failed readiness on a shared
+       dependency, the Service would drop them all and users would see "connection refused" instead of a JSON 503. */ -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search-api
+spec:
+  replicas: {{ .Values.searchApi.replicas }}
+  selector: {matchLabels: {app: search-api}}
+  template:
+    metadata:
+      labels: {app: search-api}
+      annotations: {prometheus.io/scrape: "true", prometheus.io/port: "8000", prometheus.io/path: /metrics}
+    spec:
+      securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000}
+      containers:
+        - name: search-api
+          image: {{ required "set images.searchApi (make up passes it)" .Values.images.searchApi }}
+          imagePullPolicy: IfNotPresent
+          command: [uvicorn, --factory, "podsearch.api.app:create_app", --host, "0.0.0.0", --port, "8000", --no-access-log]
+          env: {{- include "podsearch.appEnv" . | nindent 12 }}
+            - {name: EMBEDDER_URL, value: "http://embedder:8000"}
+          ports: [{containerPort: 8000, name: http}]
+          resources: {{- toYaml .Values.searchApi.resources | nindent 12 }}
+          securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+          startupProbe: {httpGet: {path: /healthz, port: http}, periodSeconds: 2, failureThreshold: 30}
+          readinessProbe: {httpGet: {path: /readyz, port: http}, periodSeconds: 5}
+          livenessProbe: {httpGet: {path: /healthz, port: http}, periodSeconds: 20, failureThreshold: 3}
+---
+# NodePort 30080 -> host port 8080 (cluster/k3d.yaml)
+apiVersion: v1
+kind: Service
+metadata:
+  name: search-api
+spec:
+  type: NodePort
+  selector: {app: search-api}
+  ports: [{name: http, port: 8000, targetPort: http, nodePort: 30080}]
