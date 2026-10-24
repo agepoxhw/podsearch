@@ -1,0 +1,8 @@
+source_data/
+*.mp3
+*.wav
+charts/*/charts/*.tgz
+.venv/
+__pycache__/
+spike/
+.DS_Store

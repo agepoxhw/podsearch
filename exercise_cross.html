@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Take-home exercise: search podcast audio by meaning</title>
+<style>
+  :root {
+    --ink: #1c1f24; --muted: #5b6370; --line: #e3e6ea; --bg: #fbfbfa;
+    --card: #ffffff; --accent: #2f5d8a; --accent-soft: #e8f0f7;
+    --warn: #8a5a00; --warn-soft: #fff4dc; --out: #f3f3f3;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --ink: #e6e8eb; --muted: #9aa3ae; --line: #2c3138; --bg: #15181c;
+      --card: #1c2026; --accent: #7fb0de; --accent-soft: #1f2b38;
+      --warn: #f0c060; --warn-soft: #2e2615; --out: #22262c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  main { max-width: 860px; margin: 0 auto; padding: 48px 24px 96px; }
+  h1 { font-size: 2rem; line-height: 1.25; margin: 0 0 8px; letter-spacing: -0.01em; }
+  .lede { font-size: 1.15rem; color: var(--muted); margin: 0 0 32px; }
+  h2 {
+    font-size: 1.15rem; margin: 48px 0 12px; padding-top: 16px;
+    border-top: 1px solid var(--line);
+  }
+  code { font: 0.9em ui-monospace, SFMono-Regular, Menlo, monospace;
+         background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+  a { color: var(--accent); }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; font-size: 0.85rem; }
+  td:first-child { font-variant-numeric: tabular-nums; width: 80px; }
+
+  ol.reqs { padding-left: 0; list-style: none; counter-reset: r; }
+  ol.reqs li {
+    counter-increment: r; position: relative; padding: 10px 0 10px 44px;
+    border-bottom: 1px solid var(--line);
+  }
+  ol.reqs li::before {
+    content: counter(r); position: absolute; left: 0; top: 10px;
+    width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft);
+    color: var(--accent); font-weight: 700; display: grid; place-items: center; font-size: 0.85rem;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 0; list-style: none; }
+  .chips li { background: var(--out); border: 1px solid var(--line); border-radius: 999px;
+              padding: 4px 12px; font-size: 0.9rem; color: var(--muted); }
+
+  .timeline { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .slot { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .slot .min { font-size: 0.8rem; color: var(--muted); }
+  .slot b { display: block; margin: 2px 0 6px; }
+  .slot p { margin: 0; font-size: 0.92rem; }
+
+  @media (max-width: 720px) {
+    .timeline { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+<h1>Take-home exercise: search podcast audio by meaning</h1>
+<p class="lede">Build a small system that lets a user type a text query and find the moments in podcast audio where the speakers talk about that topic. The output is a ranked list of chunks.</p>
+
+<p>The system runs on a local Kubernetes cluster and indexes audio with a speech embedding model. It never produces a transcript.</p>
+
+<p>Every component runs inside one local Kubernetes cluster.</p>
+
+<h2>Time and tools</h2>
+<p>Plan for about one working day. Use any AI coding tools you like; we use Claude Code every day and expect you to. In the interview, we walk through your architecture together, so make sure you understand what you submit.</p>
+<p>Many parts of this exercise are probably new to you. That is intentional: we want to see how you learn an unfamiliar area and get it working.</p>
+
+<h2>Input audio</h2>
+<p>The attached tar contains the first 30 minutes of these Lex Fridman Podcast episodes:</p>
+<table>
+  <thead><tr><th>Episode</th><th>Guest</th><th>Topic</th></tr></thead>
+  <tbody>
+    <tr><td>289</td><td>Stephen Kotkin</td><td>Putin, Zelenskyy and the war in Ukraine</td></tr>
+    <tr><td>310</td><td>Andrew Bustamante</td><td>Life as a CIA spy</td></tr>
+    <tr><td>334</td><td>Abbas Amanat</td><td>Iran: protests, history, the CIA and nuclear weapons</td></tr>
+  </tbody>
+</table>
+
+<h2>Requirements</h2>
+<ol class="reqs">
+  <li><strong>Cluster.</strong> Run everything on a local Kubernetes cluster of your choice, such as kind, k3d, k3s or minikube. A single command brings the whole system up from a clean checkout.</li>
+  <li><strong>Object store.</strong> Run an S3-compatible object store of your choice inside the cluster. You load audio by uploading files to it.</li>
+  <li><strong>Ingestion.</strong> An in-cluster process picks up newly uploaded audio, splits it into 10-second chunks, embeds each chunk, and writes the vectors to the vector database. Assume new audio keeps arriving: the system indexes it without a manual step or a restart.</li>
+  <li><strong>Model.</strong> Embed audio chunks with Meta SONAR's English speech encoder (<code>sonar_speech_encoder_eng</code>) and embed queries with its text encoder (<code>text_sonar_basic_encoder</code>). Both map into the same vector space. See <a href="https://github.com/facebookresearch/SONAR">Meta SONAR on GitHub</a>.</li>
+  <li><strong>Vector database.</strong> Store chunk vectors in a vector database of your choice, running in the cluster.</li>
+  <li><strong>Search API.</strong> An HTTP endpoint takes a text query and returns ranked hits — decide what a hit should contain. Return only hits whose confidence, the cosine similarity between the query vector and the chunk vector, is at least <code>0.20</code>.</li></ol>
+
+<h2>Recommendations</h2>
+<ul>
+  <li><strong>Orchestration.</strong> Use <a href="https://docs.ray.io/en/latest/data/data.html">Ray Data</a> to orchestrate the ingestion pipeline — chunking, embedding, and writing vectors.</li>
+  <li><strong>UI.</strong> Not a requirement, but build a simple page with a search box and a player for each hit — it is the fastest way to check your own results before you write them up. Styling does not matter.</li>
+</ul>
+
+<h2>What to submit</h2>
+<p>Send a link to a Git repository that contains:</p>
+<ol>
+  <li>The code and the cluster manifests or charts.</li>
+  <li>A <code>README.md</code> with:
+    <ul>
+      <li>the bring-up command and any prerequisites;</li>
+      <li>a short architecture description;</li>
+      <li>your main design choices and the alternatives you rejected;</li>
+      <li>what you learned and what was hardest;</li>
+      <li>what you would change to index 1,000 times more audio.</li>
+    </ul>
+  </li>
+  <li>Results for these queries: <code>Putin</code>, <code>Ukraine</code>, <code>Middle East</code> and <code>Iran</code>. For each one, list the hits you consider correct and any you consider wrong.</li>
+</ol>
+
+<h2>What we look for</h2>
+<ul>
+  <li>The system comes up from a clean checkout and returns sensible results.</li>
+  <li>Your design choices are deliberate, and you can explain the trade-offs.</li>
+  <li>You understand the code you submitted, including the parts an AI tool wrote.</li>
+  <li>You can say where the approach works well and where it breaks.</li>
+</ul>
+
+</main>
+</body>
+</html>

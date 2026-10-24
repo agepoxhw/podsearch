@@ -1,0 +1,17 @@
+# Builds the fairseq2n wheel for linux/aarch64 (Meta publishes none).
+# Same Python and torch as the ML images: py3.11, torch 2.8.0 (CPU build is the default on aarch64).
+FROM python:3.11-slim-bookworm AS build
+ARG FAIRSEQ2_TAG=v0.5.2
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      build-essential git libsndfile1-dev zlib1g-dev ca-certificates && rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir torch==2.8.0 wheel
+RUN git clone --depth 1 --branch ${FAIRSEQ2_TAG} --recurse-submodules --shallow-submodules \
+      https://github.com/facebookresearch/fairseq2.git /src
+WORKDIR /src/native
+RUN pip install --no-cache-dir -r python/requirements-build.txt
+RUN cmake -GNinja -B build && cmake --build build
+WORKDIR /src/native/python
+RUN pip wheel --no-deps --no-build-isolation . -w /out
+
+FROM scratch AS out
+COPY --from=build /out/*.whl /
