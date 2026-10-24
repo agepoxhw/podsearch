@@ -38,7 +38,15 @@ done_
 stage 4 "deploy chart"
 # Sub-charts (Qdrant, SeaweedFS) are not committed; fetch the exact versions pinned in Chart.lock.
 helm dependency build charts/podsearch >/dev/null
-helm upgrade --install podsearch charts/podsearch --namespace "$NS" --wait
+# Helm installs a chart's crds/ only on first install, never on upgrade, so apply them ourselves.
+# --server-side: the RayCluster CRD is too big for the client-side "last-applied" annotation.
+helm show crds charts/podsearch/charts/kuberay-operator-*.tgz | kubectl apply --server-side -f - >/dev/null
+source .build/images.env   # written by build-images.sh: ML_BASE_IMAGE, ML_SPEECH_IMAGE, ...
+# --force-conflicts: the Ray autoscaler edits spec.workerGroupSpecs and so owns it; Helm takes it back on
+# each run and the autoscaler re-adjusts within seconds. Without the flag, upgrade fails on a field conflict.
+helm upgrade --install podsearch charts/podsearch --namespace "$NS" --wait --force-conflicts \
+  --set images.mlBase="$ML_BASE_IMAGE" \
+  --set images.mlSpeech="$ML_SPEECH_IMAGE"
 done_
 
 stage 5 "wait until ready"

@@ -1,4 +1,4 @@
-.PHONY: prereqs up down status logs upload upload-all load ls test lock images
+.PHONY: prereqs up down status logs upload upload-all load ls test lock images clean-images
 DATA_DIR ?= ./source_data
 SHELL := /bin/bash
 
@@ -38,3 +38,6 @@ test:               ## unit tests, run inside the ml-base image (same libs as pr
 
 images:             ## build ml-base/ml-speech/ml-text for this machine and push to the local registry
 	@scripts/build-images.sh
+
+clean-images:       ## remove superseded ml-* image tags from the host Docker (keeps the current ones)
+	@scripts/clean-images.sh

@@ -39,6 +39,34 @@ qdrant:
     requests: {cpu: 100m, memory: 256Mi}
     limits: {memory: 1Gi}
 
+# Our own images. No defaults on purpose: `make up` passes the content-hash tags from
+# .build/images.env, and the chart fails if they are missing (never a stale or `latest` image).
+images:
+  mlBase: ""
+  mlSpeech: ""
+
+# Ray cluster (the CR is rendered by templates/raycluster.yaml; KubeRay turns it into pods).
+ray:
+  head:
+    resources:
+      requests: {cpu: 250m, memory: 1Gi}
+      limits: {cpu: "1", memory: 2Gi}
+  worker:
+    minReplicas: 1
+    maxReplicas: 2
+    resources:               # placeholder: tuned from a measured speech-only worker
+      requests: {cpu: "3", memory: 8Gi}
+      limits: {cpu: "4", memory: 12Gi}
+  autoscaler:
+    resources:
+      requests: {cpu: 50m, memory: 128Mi}
+      limits: {cpu: 200m, memory: 256Mi}
+
+kuberay-operator:
+  resources:
+    requests: {cpu: 50m, memory: 128Mi}
+    limits: {cpu: 200m, memory: 512Mi}
+
 # Small helper image with aws-cli, used by the toolbox pod.
 awscli:
   image: amazon/aws-cli:2.38.4

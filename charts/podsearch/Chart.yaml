@@ -11,3 +11,6 @@ dependencies:
   - name: seaweedfs
     version: 4.48.0
     repository: https://seaweedfs.github.io/seaweedfs/helm
+  - name: kuberay-operator
+    version: 1.7.1
+    repository: https://ray-project.github.io/kuberay-helm/

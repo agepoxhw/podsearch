@@ -17,7 +17,7 @@ Installed on the host with Homebrew on 2026-10-23 (macOS arm64):
 | uv | 0.13.5 |
 | ffmpeg | 9.0.2 |
 
-Colima: `--vm-type vz --vz-rosetta --cpu 8 --memory 20 --disk 120`. Verified that `docker run --platform linux/amd64 alpine uname -m` prints `x86_64`.
+Colima: `--vm-type vz --vz-rosetta --cpu 8 --memory 20 --disk 200` (was 120; grown in Phase 4a, see below). Verified that `docker run --platform linux/amd64 alpine uname -m` prints `x86_64`.
 
 Host setup note: `~/.docker/config.json` was created with `cliPluginsExtraDirs` pointing at `/opt/homebrew/lib/docker/cli-plugins`, so that `docker buildx` is found. (`make prereqs` in Phase 8 should check for this.)
 
@@ -99,3 +99,17 @@ The Phase 4 subscriber depends on these.
 | `make up` | New stage 3 "build and push images" (5 stages now) | The registry exists once the cluster exists, so it comes after stage 1. |
 | Test dependency | `moto[s3]` runs S3 tests in-process; Qdrant tests use the in-memory client | Tests need no running cluster. |
 | Deferred | JSON-log helper | It is first needed by the Phase 4 controller. |
+
+## Phase 4a decisions
+
+| Item | Decision | Why / alternatives rejected |
+|---|---|---|
+| KubeRay | Official chart `kuberay-operator` 1.7.1 (operator image `v1.7.1`), pinned in `Chart.lock` | Operator turns the `RayCluster` CR into pods. |
+| Head image | `ml-base` (Ray, no weights); workers use `ml-speech` | Head has `num-cpus: 0` and only runs GCS, dashboard and the job driver. |
+| Probes | Custom exec probes: Python `urllib` against Ray's health endpoints | Image has no wget/curl. Rejected: adding wget to ml-base (forces a full rebuild); `ray health-check` (marked not a public API, head-only). |
+| Autoscaler | In-tree autoscaler on, 1 to 2 workers, 120 s idle timeout | Demand-driven (pending tasks/actors), edits the RayCluster spec; KubeRay creates the pods. |
+| Helm vs autoscaler | `--force-conflicts` on `helm upgrade` | Helm takes `workerGroupSpecs` back each run; the autoscaler re-adjusts in seconds. Rejected: `--server-side=false` (turns off SSA for the whole chart); autoscaler off (the plan wants it). |
+| CRDs | `up.sh` applies them with `--server-side` before Helm | Helm never upgrades CRDs. |
+| Weights download | BuildKit cache mount (`id=fairseq2-<kind>`) in both model Dockerfiles | Removes the network dependency on rebuilds. Measured: base change still costs about 8 min (local 8 GB layer rebuild), 0 bytes downloaded. A separate weights image or a weights PVC would be alternatives (PVC rejected for now: "no runtime downloads" and clean-clone reproducibility). `docker builder prune` also empties the mount. |
+| pyarrow | pinned 25.0.0 | See journal. |
+| Disk | Done: Colima disk grown to 200 GB, `make clean-images` added, `prereqs.sh` requires 50 GB free on Docker's disk | Each image generation is about 10 GB on the host plus registry and node copies. |

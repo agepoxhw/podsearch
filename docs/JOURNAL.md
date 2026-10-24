@@ -44,3 +44,13 @@ Running log: what I learned, surprises, errors and fixes.
 - Error: I started the base build and only then noticed `moto` was missing for the S3 tests. Killed it, added `moto[s3]`, re-locked. Lesson: list the test dependencies before the first long build.
 - Error: reading a build log with `cat` dumped 33 kB of progress bars. Filter with `tr '\r' '\n' | tail`.
 - Result: `make test` 31 passed. A real 30 min mp3 decodes in 1.9 s into 180 chunks. `scripts/build-images.sh` builds all three, pushes them to the registry, and a second run skips all three in 0.1 s.
+
+## Phase 4a (Ray on Kubernetes)
+
+- Error: pinned `ray[data]`, which has no dashboard (no aiohttp etc.). The head's health endpoints and the Jobs API never started, probes failed, and the kubelet restarted every Ray pod in a loop. Fix: `ray[default,data]`. Lesson: the smoke job caught what unit tests could not.
+- Error: `pyarrow` 26.0.0 needs NumPy 2 at import, but fairseq2 forces numpy 1.x. pyarrow declares no numpy dependency, so the resolver saw no conflict. Fix: pin `pyarrow==25.0.0` (tested with numpy 1.26.4; 20 to 25 all import).
+- Error: `helm upgrade` fails with a server-side-apply conflict on `RayCluster.spec.workerGroupSpecs`. The autoscaler patches that list and owns it entirely (`managedFields`). Fix: `--force-conflicts`. KubeRay documents no pattern for this.
+- Error: Helm installs a chart's `crds/` only on first install, not upgrade. `up.sh` now applies them (`helm show crds ... | kubectl apply --server-side`; the RayCluster CRD is too big for client-side apply).
+- Error: the Docker disk filled to 96%. Each image generation is about 10 GB on the host plus copies in the registry and in the node. The kubelet evicted every pod (`DiskPressure`, threshold about 15% free) and kept the taint about 5 min after space was freed. Lesson: check `df` before long builds; a Docker prune is not instant relief for the kubelet.
+- Learned: ml-base has no wget/curl, so KubeRay's default probes would fail; ours call the Ray health endpoints with Python's urllib.
+- Wrong prediction: I said a cache mount would make base changes rebuild in about a minute. Measured: 489 s with 0 bytes downloaded. The download is gone, but Docker still copies, packs and hashes an 8 GB layer on one thread. Base changes stay expensive.

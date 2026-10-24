@@ -8,4 +8,6 @@ curl -fsS http://localhost:5001/v2/ >/dev/null && echo "registry reachable at lo
 if kubectl -n "$NS" get deploy -o name | grep -q .; then
   kubectl -n "$NS" wait --for=condition=Available deploy --all --timeout=600s
 fi
+# KubeRay sets this condition once the head and all wanted workers are Ready.
+kubectl -n "$NS" wait --for=condition=RayClusterProvisioned raycluster/ray --timeout=600s
 echo "ready"

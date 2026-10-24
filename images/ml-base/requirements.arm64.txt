@@ -1,9 +1,20 @@
+aiohappyeyeballs==2.7.1
+    # via aiohttp
+aiohttp==3.14.5
+    # via
+    #   aiohttp-cors
+    #   ray
+aiohttp-cors==0.8.1
+    # via ray
+aiosignal==1.4.0
+    # via aiohttp
 annotated-types==0.8.0
     # via pydantic
 anyio==4.15.1
     # via httpx
 attrs==26.1.0
     # via
+    #   aiohttp
     #   jsonschema
     #   referencing
 blobfile==3.0.0
@@ -32,8 +43,14 @@ click==8.5.0
     # via ray
 colorama==0.4.6
     # via sacrebleu
+colorful==0.5.8
+    # via ray
 cryptography==50.0.2
-    # via moto
+    # via
+    #   google-auth
+    #   moto
+distlib==0.4.4
+    # via virtualenv
 editdistance==0.8.1
     # via fairseq2
 fairseq2==0.5.2
@@ -48,15 +65,29 @@ filelock==4.2.4
     # via
     #   blobfile
     #   huggingface-hub
+    #   python-discovery
     #   ray
     #   torch
+    #   virtualenv
+frozenlist==1.8.0
+    # via
+    #   aiohttp
+    #   aiosignal
 fsspec==2026.9.0
     # via
     #   huggingface-hub
     #   ray
     #   torch
+google-api-core==2.43.0
+    # via opencensus
+google-auth==2.62.0
+    # via google-api-core
+googleapis-common-protos==1.76.0
+    # via google-api-core
 grpcio==1.84.1
-    # via qdrant-client
+    # via
+    #   qdrant-client
+    #   ray
 h11==0.16.0
     # via httpcore
 h2==4.4.1
@@ -78,6 +109,7 @@ idna==3.20
     #   anyio
     #   httpx
     #   requests
+    #   yarl
 importlib-metadata==7.2.1
     # via fairseq2
 importlib-resources==6.5.2
@@ -112,6 +144,10 @@ mpmath==1.3.0
     # via sympy
 msgpack==1.2.3
     # via ray
+multidict==7.2.0
+    # via
+    #   aiohttp
+    #   yarl
 mypy-extensions==1.1.0
     # via fairseq2
 networkx==3.6.1
@@ -127,14 +163,37 @@ numpy==1.26.4
     #   sonar-space
     #   soundfile
     #   sox
+opencensus==0.11.4
+    # via ray
+opencensus-context==0.1.3
+    # via opencensus
+opentelemetry-api==1.45.1
+    # via
+    #   google-api-core
+    #   opentelemetry-exporter-prometheus
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
+opentelemetry-exporter-prometheus==0.66b1
+    # via ray
+opentelemetry-proto==1.45.1
+    # via ray
+opentelemetry-sdk==1.45.1
+    # via
+    #   opentelemetry-exporter-prometheus
+    #   ray
+opentelemetry-semantic-conventions==0.66b1
+    # via opentelemetry-sdk
 packaging==24.2
     # via
     #   fairseq2
     #   huggingface-hub
     #   pytest
     #   ray
+    #   virtualenv
 pandas==3.0.6
     # via ray
+platformdirs==4.13.5
+    # via virtualenv
 pluggy==1.7.0
     # via pytest
 portalocker==4.4.1
@@ -142,17 +201,38 @@ portalocker==4.4.1
     #   qdrant-client
     #   sacrebleu
 prometheus-client==0.26.0
-    # via -r images/ml-base/requirements.in
+    # via
+    #   -r images/ml-base/requirements.in
+    #   opentelemetry-exporter-prometheus
+    #   ray
+propcache==0.5.4
+    # via
+    #   aiohttp
+    #   yarl
+proto-plus==1.29.0
+    # via google-api-core
 protobuf==7.36.2
     # via
+    #   google-api-core
+    #   googleapis-common-protos
+    #   opentelemetry-proto
+    #   proto-plus
     #   qdrant-client
     #   ray
 psutil==5.9.8
     # via fairseq2
 py-partiql-parser==0.6.3
     # via moto
-pyarrow==26.0.0
+py-spy==0.4.2
     # via ray
+pyarrow==25.0.0
+    # via
+    #   -r images/ml-base/requirements.in
+    #   ray
+pyasn1==0.6.4
+    # via pyasn1-modules
+pyasn1-modules==0.4.2
+    # via google-auth
 pycparser==3.12
     # via cffi
 pycryptodomex==3.24.1
@@ -161,6 +241,7 @@ pydantic==2.14.1
     # via
     #   pydantic-settings
     #   qdrant-client
+    #   ray
 pydantic-core==2.50.1
     # via pydantic
 pydantic-settings==2.16.1
@@ -175,6 +256,8 @@ python-dateutil==2.9.0.post0
     # via
     #   botocore
     #   pandas
+python-discovery==1.6.4
+    # via virtualenv
 python-dotenv==1.2.4
     # via pydantic-settings
 pyyaml==6.0.3
@@ -197,6 +280,7 @@ regex==2026.9.29
     #   tiktoken
 requests==2.34.2
     # via
+    #   google-api-core
     #   huggingface-hub
     #   moto
     #   ray
@@ -219,7 +303,11 @@ sacrebleu==2.6.0
 safetensors==0.8.0
     # via fairseq2
 six==1.17.0
-    # via python-dateutil
+    # via
+    #   opencensus
+    #   python-dateutil
+smart-open==8.0.4
+    # via ray
 sonar-space==0.5.0
     # via -r images/ml-base/requirements.in
 soundfile==0.14.0
@@ -251,10 +339,15 @@ tqdm==4.70.1
     #   sonar-space
 typing-extensions==4.16.0
     # via
+    #   aiohttp
+    #   aiosignal
     #   anyio
     #   fairseq2
     #   grpcio
     #   huggingface-hub
+    #   opentelemetry-api
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
     #   pydantic
     #   pydantic-core
     #   pydantic-settings
@@ -276,9 +369,15 @@ urllib3==2.8.0
     #   qdrant-client
     #   requests
     #   responses
+virtualenv==21.14.5
+    # via ray
 werkzeug==3.1.9
     # via moto
+wrapt==2.5.1
+    # via smart-open
 xmltodict==1.0.4
     # via moto
+yarl==1.25.1
+    # via aiohttp
 zipp==4.1.2
     # via importlib-metadata

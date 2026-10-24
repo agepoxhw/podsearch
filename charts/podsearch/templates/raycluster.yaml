@@ -1,0 +1,86 @@
+{{- /* One Ray cluster. KubeRay watches this object and creates the head pod, worker pods and the autoscaler sidecar. */ -}}
+{{- $base := required "set images.mlBase (make up passes it)" .Values.images.mlBase -}}
+{{- $speech := required "set images.mlSpeech (make up passes it)" .Values.images.mlSpeech -}}
+{{- define "podsearch.rayPodSecurity" }}
+securityContext: {runAsNonRoot: true, runAsUser: 1000, runAsGroup: 1000}
+{{- end }}
+apiVersion: ray.io/v1
+kind: RayCluster
+metadata:
+  name: ray
+spec:
+  rayVersion: "2.59.0"            # must equal the ray pinned in ml-base
+  enableInTreeAutoscaling: true   # adds the autoscaler sidecar to the head pod
+  autoscalerOptions:
+    idleTimeoutSeconds: 120       # remove an idle extra worker after 2 min
+    resources: {{- toYaml .Values.ray.autoscaler.resources | nindent 6 }}
+  headGroupSpec:
+    rayStartParams:
+      num-cpus: "0"               # head only coordinates; tasks and actors land on workers
+      dashboard-host: 0.0.0.0     # serves the dashboard and the Jobs REST API on 8265
+    template:
+      spec:
+        {{- include "podsearch.rayPodSecurity" . | nindent 8 }}
+        containers:
+          - name: ray-head
+            image: {{ $base }}
+            imagePullPolicy: IfNotPresent
+            ports:
+              - {containerPort: 6379, name: gcs}
+              - {containerPort: 8265, name: dashboard}
+              - {containerPort: 10001, name: client}
+            resources: {{- toYaml .Values.ray.head.resources | nindent 14 }}
+            # The image has no wget/curl, so these call the same Ray health endpoints with Python's urllib.
+            readinessProbe: &probe
+              exec: {command: [python, -c, "import urllib.request as u; u.urlopen('http://localhost:8265/api/gcs_healthz', timeout=3)"]}
+              initialDelaySeconds: 10
+              periodSeconds: 10
+              timeoutSeconds: 5
+              failureThreshold: 6
+            livenessProbe:
+              <<: *probe
+              initialDelaySeconds: 60
+              failureThreshold: 10
+            securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+  workerGroupSpecs:
+    - groupName: speech
+      # no `replicas:` here on purpose: the autoscaler owns it, and Helm setting it too causes an apply conflict
+      minReplicas: {{ .Values.ray.worker.minReplicas }}
+      maxReplicas: {{ .Values.ray.worker.maxReplicas }}
+      rayStartParams:
+        object-store-memory: "1000000000"   # 1 GB; the default would claim a share of the pod memory
+      template:
+        spec:
+          {{- include "podsearch.rayPodSecurity" . | nindent 10 }}
+          volumes:
+            - name: shm                      # Ray's object store lives in /dev/shm; Docker's default is only 64 MB
+              emptyDir: {medium: Memory, sizeLimit: 1500Mi}
+          containers:
+            - name: ray-worker
+              image: {{ $speech }}
+              imagePullPolicy: IfNotPresent
+              volumeMounts:
+                - {name: shm, mountPath: /dev/shm}
+              resources: {{- toYaml .Values.ray.worker.resources | nindent 16 }}
+              readinessProbe: &wprobe
+                exec: {command: [python, -c, "import urllib.request as u; u.urlopen('http://localhost:52365/api/local_raylet_healthz', timeout=3)"]}
+                initialDelaySeconds: 10
+                periodSeconds: 10
+                timeoutSeconds: 5
+                failureThreshold: 6
+              livenessProbe:
+                <<: *wprobe
+                initialDelaySeconds: 60
+                failureThreshold: 10
+              securityContext: {allowPrivilegeEscalation: false, capabilities: {drop: [ALL]}}
+---
+# Host access to the Ray dashboard and Jobs API: localhost:8265 (k3d maps host 8265 to NodePort 30265).
+apiVersion: v1
+kind: Service
+metadata:
+  name: ray-dashboard
+spec:
+  type: NodePort
+  selector: {ray.io/cluster: ray, ray.io/node-type: head}
+  ports:
+    - {name: dashboard, port: 8265, targetPort: 8265, nodePort: 30265}

@@ -6,11 +6,14 @@ torchaudio==2.8.0
 fairseq2==0.5.2
 fairseq2n==0.5.2
 sonar-space==0.5.0
-ray[data]==2.59.0
+ray[default,data]==2.59.0
 qdrant-client==1.20.0
 boto3==1.43.118
 pydantic-settings
 numpy
+# pyarrow declares no numpy dependency, so the resolver picks the newest. 26.0.0 needs NumPy 2 at import,
+# but fairseq2 forces numpy 1.x. 25.0.0 is the newest that imports with numpy 1.26.4 (tested).
+pyarrow==25.0.0
 prometheus-client
 pytest
 moto[s3]
