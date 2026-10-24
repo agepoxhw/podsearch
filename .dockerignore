@@ -1,0 +1,9 @@
+.git
+source_data
+spike
+.venv
+**/__pycache__
+charts
+docs
+*.mp3
+*.wav

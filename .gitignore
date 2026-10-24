@@ -6,3 +6,4 @@ charts/*/charts/*.tgz
 __pycache__/
 spike/
 .DS_Store
+.build/

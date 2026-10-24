@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 CLUSTER=podsearch
 NS=podsearch
-TOTAL=4
+TOTAL=5
 stage() { echo; echo "[$1/$TOTAL] $2"; T0=$SECONDS; }
 done_() { echo "    done in $((SECONDS - T0))s"; }
 START=$SECONDS
@@ -30,13 +30,18 @@ else
 fi
 done_
 
-stage 3 "deploy chart"
+stage 3 "build and push images"
+# Tags are content hashes, so unchanged images are skipped (a warm re-run takes under a second).
+scripts/build-images.sh
+done_
+
+stage 4 "deploy chart"
 # Sub-charts (Qdrant, SeaweedFS) are not committed; fetch the exact versions pinned in Chart.lock.
 helm dependency build charts/podsearch >/dev/null
 helm upgrade --install podsearch charts/podsearch --namespace "$NS" --wait
 done_
 
-stage 4 "wait until ready"
+stage 5 "wait until ready"
 scripts/wait-ready.sh
 done_
 

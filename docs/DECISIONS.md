@@ -58,7 +58,7 @@ Host setup note: `~/.docker/config.json` was created with `cliPluginsExtraDirs` 
 - Helm chart `charts/podsearch` is a placeholder (one ConfigMap) that grows each phase.
 
 - Container runtime: Colima (Lima + Apple `vz`) with 8 CPU / 20 GB / 120 GB. Any Docker engine with >= 16 GB works (Docker Desktop, OrbStack); `make prereqs` checks the memory. `--vz-rosetta` is no longer needed for our ML images (native arm64), kept only for amd64-only third-party images. To verify in Phase 8: a clean-clone `make up` on Docker Desktop.
-- To check before Phase 3 image builds: the VM root disk shows 19 GB although 120 GB was requested; confirm where Docker stores its data.
+- Checked (start of Phase 3): Docker data (`/var/lib/docker`) is on a separate 118 GB disk (`/dev/vdb1`, 77 GB free). The 19 GB root disk holds only the OS. Image builds have room; the spike's 20 GB build cache is reclaimable (`docker builder prune`).
 
 ## Phase 2: object store and vector DB
 
@@ -83,3 +83,19 @@ The Phase 4 subscriber depends on these.
 - Our `CopyObject` to `library/` gives **no event** under the `incoming/` prefix (the prefix filter excludes it).
 - Our `DeleteObject` of `incoming/x` gives a **delete event** (`newEntry=null`). The subscriber must handle only creates and ignore deletes, or our own commit step would re-trigger it.
 - Not tested yet: overwriting an existing key (expected: one event with both `oldEntry` and `newEntry`), and resuming from a saved `since_ns`.
+
+## Phase 3 decisions
+
+| Item | Decision | Why |
+|---|---|---|
+| Python lock | `images/ml-base/requirements.in` plus one lock file per arch, made by `make lock` (`uv pip compile --python-platform`) | arm64 resolves `fairseq2n` to our wheel in `wheels/`; amd64 resolves to the official CPU wheel via extra indexes. One lock cannot be right for both. |
+| Key pins | torch/torchaudio 2.8.0, fairseq2 and fairseq2n 0.5.2, sonar-space 0.5.0, ray[data] 2.59.0, qdrant-client 1.20.0, boto3 1.43.118, numpy 1.26.4, uv 0.13.5, moto 5.2.4 (tests only) | Pinned from Phase 0 findings; everything is exact. |
+| `psutil` builder stage | The Dockerfile has a builder stage with build-essential; the runtime stage copies only `/opt/venv` | psutil 5.9.8 has no aarch64 wheel and must be compiled. The compiler stays out of the final image. |
+| Short audio | A file under 2 s raises `AudioTooShortError` | Otherwise it would give zero chunks and look indexed while being unsearchable. The controller will reject it. |
+| Chunk policy | 10 s windows, tail under 2 s dropped, tail 2 to 10 s zero-padded, RMS from real audio only | Keeps the vector input at a fixed length without letting padding change the loudness number. |
+| Model cache | Weights baked into `/models`, `.baked-<kind>` marker, loader refuses without it | fairseq2 has no offline flag, so we enforce no runtime download ourselves. |
+| Layer order | Weights layer first, then the rest of `src/` | Code edits never re-download 7+ GB. |
+| Image tags | Content hash of each image's inputs, pushed to `localhost:5001`, skipped if already there. Written to `.build/images.env` | Unique pinned tags (no `latest`) so IfNotPresent works; re-runs are instant. |
+| `make up` | New stage 3 "build and push images" (5 stages now) | The registry exists once the cluster exists, so it comes after stage 1. |
+| Test dependency | `moto[s3]` runs S3 tests in-process; Qdrant tests use the in-memory client | Tests need no running cluster. |
+| Deferred | JSON-log helper | It is first needed by the Phase 4 controller. |

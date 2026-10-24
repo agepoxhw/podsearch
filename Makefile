@@ -1,4 +1,4 @@
-.PHONY: prereqs up down status logs upload upload-all load ls
+.PHONY: prereqs up down status logs upload upload-all load ls test lock images
 DATA_DIR ?= ./source_data
 SHELL := /bin/bash
 
@@ -29,3 +29,12 @@ load: upload-all    ## alias: load the sample data set
 
 ls:                 ## list the bucket (incoming/, library/, rejected/)
 	@kubectl -n podsearch exec deploy/toolbox -- aws s3 ls s3://podcasts/ --recursive --human-readable
+
+lock:               ## regenerate images/ml-base/requirements.<arch>.txt
+	@scripts/lock.sh
+
+test:               ## unit tests, run inside the ml-base image (same libs as production)
+	@scripts/test.sh
+
+images:             ## build ml-base/ml-speech/ml-text for this machine and push to the local registry
+	@scripts/build-images.sh

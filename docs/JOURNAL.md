@@ -33,3 +33,14 @@ Running log: what I learned, surprises, errors and fixes.
 - Error: `kubectl wait` right after `delete pod` raced with the pod being recreated (NotFound). Sleep, or wait on the rollout.
 - Learned: the Qdrant image has no `curl`. Check it without a pod via `kubectl get --raw /api/v1/namespaces/podsearch/services/qdrant:6333/proxy/readyz`.
 - Result: a file uploaded to SeaweedFS survives deleting the pod (PVC `local-path`). Clean `make down && make up` takes 72 s including image pulls, and the bucket is created by the hook.
+
+## Phase 3 (images and shared library)
+
+- Learned: fairseq2 has no offline switch and downloads a model when it is missing from its cache. In a pod that is a silent multi-GB download. We bake the weights at build time and write a marker file `/models/.baked-<kind>`; `models.load_*` refuses to run without it. Proof: both models load with `docker run --network none`, and the loader raises `ModelCacheError` when the marker is removed.
+- Learned: Docker layer order is what makes two model images cheap. The weights layer is built from only `__init__.py`, `models.py` and `prefetch.py`; the rest of `src/` is copied after it. Editing code re-sends a ~37 kB layer, not 8 GB. ml-base (2.3 GB) is shared by both model images.
+- Learned: ffmpeg's stereo to mono downmix scales each channel by about 0.707, so an identical-L/R tone of amplitude 0.5 comes out near 0.707 (+3 dB). Harmless for embeddings, but my first test assumed 0.5 and failed.
+- Learned: `docker images` shows ml-speech as 16.6 GB, but the layers add up to about 10 GB (8 GB weights, 1.2 GB venv, 0.4 GB apt, python base). The listing size is how the image store counts, not real content. Use `docker history` for truth.
+- Learned: the amd64 base builds with no CUDA libraries (`torch 2.8.0+cpu`, `fairseq2n 0.5.2+cpu`). Compressed size is 648 MB, not comparable with the 2.26 GB uncompressed arm64 figure.
+- Error: I started the base build and only then noticed `moto` was missing for the S3 tests. Killed it, added `moto[s3]`, re-locked. Lesson: list the test dependencies before the first long build.
+- Error: reading a build log with `cat` dumped 33 kB of progress bars. Filter with `tr '\r' '\n' | tail`.
+- Result: `make test` 31 passed. A real 30 min mp3 decodes in 1.9 s into 180 chunks. `scripts/build-images.sh` builds all three, pushes them to the registry, and a second run skips all three in 0.1 s.
