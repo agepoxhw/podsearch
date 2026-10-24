@@ -1,0 +1,6 @@
+apiVersion: v2
+name: podsearch
+description: Podcast audio semantic search (umbrella chart; grows each phase)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

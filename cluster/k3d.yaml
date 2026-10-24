@@ -1,0 +1,28 @@
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: podsearch
+servers: 1
+agents: 0
+# host port -> NodePort on the node, via k3d's built-in load balancer container.
+# Services in the chart must use these exact nodePorts.
+ports:
+  - port: 8080:30080   # search-api + UI
+    nodeFilters: [loadbalancer]
+  - port: 8333:30333   # SeaweedFS S3
+    nodeFilters: [loadbalancer]
+  - port: 8265:30265   # Ray dashboard
+    nodeFilters: [loadbalancer]
+  - port: 3000:30300   # Grafana (optional monitoring)
+    nodeFilters: [loadbalancer]
+# Push from the host as localhost:5001/<img>; pods pull as podsearch-registry:5000/<img>.
+registries:
+  create:
+    name: podsearch-registry
+    host: "0.0.0.0"
+    hostPort: "5001"
+options:
+  k3s:
+    extraArgs:
+      - arg: --disable=traefik
+        nodeFilters: [server:*]

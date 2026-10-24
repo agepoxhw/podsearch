@@ -18,3 +18,7 @@ Running log: what I learned, surprises, errors and fixes.
   - Clip-to-clip cosine is low (mean 0.09, max 0.25).
   - Consequence for 0.20: real hits sit around the threshold (strict), while junk hub chunks pass it easily and outrank real hits. `rms_db` per chunk (already in the payload) is the first mitigation to try; Phase 6 should report this honestly.
 - Spike B passed: arm64 image pushed to a k3d registry (`spike-registry`), pod ran on a native arm64 k3d node and logged the identical cosine matrix, 1.28 s/chunk, 8 threads. Weights were mounted from a hostPath for the spike only; the real images bake them in. Throwaway cluster deleted; docker volume `spike-models` (about 10 GB of weights) kept to avoid re-downloads during development.
+
+## Phase 1
+- k3d runs a cluster as 4 containers: the node (`server-0`), `serverlb` (nginx that forwards host ports to NodePorts), a tools container, and the registry.
+- `make up` from nothing took 34 s; a re-run on a live cluster 4 s (secret unchanged); after `k3d cluster stop` it restarts the same cluster.

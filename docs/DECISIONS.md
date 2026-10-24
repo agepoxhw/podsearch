@@ -48,3 +48,14 @@ Host setup note: `~/.docker/config.json` was created with `cliPluginsExtraDirs` 
 | Weights | text 2.85 GB, speech 7.45 GB |
 | Peak RAM, both models loaded | about 11 GB RSS (each pod loads only one) |
 | Similarity range | normal clips: -0.05 to 0.32; matching topic about 0.15-0.32; hub clips 0.40-0.57 |
+
+## Phase 1: cluster
+
+- k3d cluster `podsearch`: 1 server, 0 agents, Traefik disabled. Services are exposed by fixed **NodePorts** (30080 API, 30333 S3, 30265 Ray, 30300 Grafana) which k3d's `serverlb` maps to host ports 8080, 8333, 8265, 3000. Reason: fewer moving parts than an Ingress.
+- Registry `podsearch-registry`: push from host as `localhost:5001/<img>`, pods pull as `podsearch-registry:5000/<img>`. Created by k3d with the cluster and deleted with it.
+- S3 credentials Secret `s3-credentials` (access_key `podsearch`, random secret_key) is generated once and never overwritten.
+- `make up` = prereqs, then `scripts/up.sh` (4 timed stages). Images stage is added in Phase 3 (no images exist yet).
+- Helm chart `charts/podsearch` is a placeholder (one ConfigMap) that grows each phase.
+
+- Container runtime: Colima (Lima + Apple `vz`) with 8 CPU / 20 GB / 120 GB. Any Docker engine with >= 16 GB works (Docker Desktop, OrbStack); `make prereqs` checks the memory. `--vz-rosetta` is no longer needed for our ML images (native arm64), kept only for amd64-only third-party images. To verify in Phase 8: a clean-clone `make up` on Docker Desktop.
+- To check before Phase 3 image builds: the VM root disk shows 19 GB although 120 GB was requested; confirm where Docker stores its data.

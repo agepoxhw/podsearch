@@ -1,0 +1,8 @@
+# Phase 1 placeholder: proves `helm upgrade --install` works. Real services arrive in later phases.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: podsearch-info
+data:
+  cluster: {{ .Values.clusterName | quote }}
+  chartVersion: {{ .Chart.Version | quote }}
