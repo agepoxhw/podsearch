@@ -1,0 +1,9 @@
+dependencies:
+- name: qdrant
+  repository: https://qdrant.github.io/qdrant-helm
+  version: 1.19.2
+- name: seaweedfs
+  repository: https://seaweedfs.github.io/seaweedfs/helm
+  version: 4.48.0
+digest: sha256:db70d067ac7abf8ab316c478134d51860ccd6160df36306e9e9a37c9a9f4643b
+generated: "2026-10-24T17:06:50.556435+03:00"

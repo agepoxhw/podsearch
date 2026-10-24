@@ -1,0 +1,40 @@
+# Toolbox: an idle pod with aws-cli already pointed at SeaweedFS, so reviewers need no aws-cli on
+# their host. `make upload` does `kubectl cp` into it, then `aws s3 cp` from inside the cluster.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: toolbox
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: toolbox}
+  template:
+    metadata:
+      labels: {app: toolbox}
+    spec:
+      securityContext: {runAsNonRoot: true, runAsUser: 1000}
+      containers:
+        - name: toolbox
+          image: {{ .Values.awscli.image }}
+          command: [sleep, infinity]
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom: {secretKeyRef: {name: s3-credentials, key: access_key}}
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom: {secretKeyRef: {name: s3-credentials, key: secret_key}}
+            - {name: AWS_DEFAULT_REGION, value: us-east-1}
+            - {name: AWS_ENDPOINT_URL, value: "http://seaweedfs-s3:8333"}   # honoured by aws-cli v2
+            - {name: HOME, value: /tmp}
+          readinessProbe:
+            exec: {command: [aws, --version]}
+            periodSeconds: 30
+          livenessProbe:
+            exec: {command: [aws, --version]}
+            initialDelaySeconds: 10
+            periodSeconds: 60
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: 10m, memory: 64Mi}
+            limits: {memory: 512Mi}

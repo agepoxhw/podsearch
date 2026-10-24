@@ -1,4 +1,5 @@
-.PHONY: prereqs up down status logs
+.PHONY: prereqs up down status logs upload upload-all load ls
+DATA_DIR ?= ./source_data
 SHELL := /bin/bash
 
 prereqs:            ## check host tools and Docker resources
@@ -16,3 +17,15 @@ status:             ## what is running
 
 logs:               ## tail logs of all pods in the namespace
 	kubectl -n podsearch logs --all-containers --prefix --tail=50 -l app.kubernetes.io/part-of=podsearch
+
+upload:             ## upload one file: make upload FILE=path/to/x.mp3
+	@test -n "$(FILE)" || { echo "usage: make upload FILE=path/to/x.mp3"; exit 2; }
+	@scripts/upload.sh "$(FILE)"
+
+upload-all:         ## upload every mp3 in DATA_DIR (default ./source_data)
+	@scripts/upload.sh $(DATA_DIR)/*.mp3
+
+load: upload-all    ## alias: load the sample data set
+
+ls:                 ## list the bucket (incoming/, library/, rejected/)
+	@kubectl -n podsearch exec deploy/toolbox -- aws s3 ls s3://podcasts/ --recursive --human-readable

@@ -31,6 +31,8 @@ fi
 done_
 
 stage 3 "deploy chart"
+# Sub-charts (Qdrant, SeaweedFS) are not committed; fetch the exact versions pinned in Chart.lock.
+helm dependency build charts/podsearch >/dev/null
 helm upgrade --install podsearch charts/podsearch --namespace "$NS" --wait
 done_
 

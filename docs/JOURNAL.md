@@ -22,3 +22,14 @@ Running log: what I learned, surprises, errors and fixes.
 ## Phase 1
 - k3d runs a cluster as 4 containers: the node (`server-0`), `serverlb` (nginx that forwards host ports to NodePorts), a tools container, and the registry.
 - `make up` from nothing took 34 s; a re-run on a live cluster 4 s (secret unchanged); after `k3d cluster stop` it restarts the same cluster.
+
+## Phase 2 (SeaweedFS + Qdrant)
+
+- Learned: I wrote my own SeaweedFS StatefulSet first, and the user asked for the official chart. I should have flagged the choice before building it; the official chart exists. Switching took about 15 minutes, because the shape was the same (PVC, Secret, S3 port).
+- Surprise: the official chart ignores `allInOne.enabled` for the split components. The master, volume and filer StatefulSets still rendered until I set `enabled: false` on each. Found with `helm template` before deploying.
+- Surprise: `createBuckets` under top-level `s3:` does nothing in all-in-one mode. It has to be under `allInOne.s3`. Found by rendering and looking for the hook Job.
+- Learned: `helm template` shows namespace `default` in service addresses. It is only a render artifact, and real installs use the release namespace.
+- Error: `sed -i` with a multi-line replacement failed on macOS (BSD sed). Use the Edit tool or python for such edits.
+- Error: `kubectl wait` right after `delete pod` raced with the pod being recreated (NotFound). Sleep, or wait on the rollout.
+- Learned: the Qdrant image has no `curl`. Check it without a pod via `kubectl get --raw /api/v1/namespaces/podsearch/services/qdrant:6333/proxy/readyz`.
+- Result: a file uploaded to SeaweedFS survives deleting the pod (PVC `local-path`). Clean `make down && make up` takes 72 s including image pulls, and the bucket is created by the hook.

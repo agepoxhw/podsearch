@@ -1,2 +1,44 @@
 # Values grow with each phase.
 clusterName: podsearch
+
+# Sub-chart values: each key must match a dependency name in Chart.yaml.
+
+# SeaweedFS (official chart) in all-in-one mode = a single `weed server -filer -s3` pod.
+seaweedfs:
+  fullnameOverride: seaweedfs
+  master: {enabled: false}    # all-in-one replaces the separate master/volume/filer pods
+  volume: {enabled: false}
+  filer: {enabled: false}
+  allInOne:
+    enabled: true
+    s3:
+      enabled: true
+      enableAuth: true
+      createBuckets:
+        - name: podcasts
+    data:
+      type: persistentVolumeClaim
+      size: 10Gi
+    resources:
+      requests: {cpu: 100m, memory: 256Mi}
+      limits: {memory: 1Gi}
+  s3:
+    # Reuse the Secret that `make up` generates once (keys access_key / secret_key).
+    credentials:
+      admin:
+        existingSecret: s3-credentials
+        accessKeyKey: access_key
+        secretKeyKey: secret_key
+
+qdrant:
+  fullnameOverride: qdrant          # stable Service name: qdrant:6333
+  replicaCount: 1
+  persistence:
+    size: 10Gi
+  resources:
+    requests: {cpu: 100m, memory: 256Mi}
+    limits: {memory: 1Gi}
+
+# Small helper image with aws-cli, used by the toolbox pod.
+awscli:
+  image: amazon/aws-cli:2.38.4

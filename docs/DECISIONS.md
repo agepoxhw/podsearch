@@ -59,3 +59,27 @@ Host setup note: `~/.docker/config.json` was created with `cliPluginsExtraDirs` 
 
 - Container runtime: Colima (Lima + Apple `vz`) with 8 CPU / 20 GB / 120 GB. Any Docker engine with >= 16 GB works (Docker Desktop, OrbStack); `make prereqs` checks the memory. `--vz-rosetta` is no longer needed for our ML images (native arm64), kept only for amd64-only third-party images. To verify in Phase 8: a clean-clone `make up` on Docker Desktop.
 - To check before Phase 3 image builds: the VM root disk shows 19 GB although 120 GB was requested; confirm where Docker stores its data.
+
+## Phase 2: object store and vector DB
+
+| Item | Pin / choice | Reason |
+|---|---|---|
+| SeaweedFS | **official Helm chart `seaweedfs/seaweedfs` 4.48.0** (app 4.48, image `chrislusf/seaweedfs:4.48`, multi-arch), as a pinned dependency in `Chart.yaml` / `Chart.lock` | User preference: use the official chart, like Qdrant. 4.49 was one day old, so we pinned the previous release. I first wrote my own StatefulSet; it is deleted. |
+| SeaweedFS mode | `allInOne.enabled=true` (one `weed server -filer -s3` pod, Deployment with Recreate strategy, PVC 10Gi). `master`, `volume`, `filer` set `enabled: false` | Laptop scope. The chart still renders the three split StatefulSets unless they are disabled explicitly. At scale: use the split layout (separate master, volume, filer pods). |
+| S3 auth | `s3.credentials.admin.existingSecret: s3-credentials`, `enableAuth: true` | One credentials Secret, generated once by `make up`. Anonymous requests get 403 (checked). |
+| Bucket creation | chart value `allInOne.s3.createBuckets: [podcasts]` (post-install/upgrade hook Job) | Must be set under `allInOne.s3`, not `s3` (the latter is ignored in all-in-one mode). |
+| S3 NodePort | own small Service `seaweedfs-s3` (NodePort 30333) selecting the chart's pod labels | The chart has a single Service for all ports; we only want S3 on the host. Filer gRPC 18888 is reachable in-cluster at `seaweedfs-all-in-one:18888`. |
+| Qdrant | official chart 1.19.2 (app v1.19.2), 1 replica, PVC 10Gi, `fullnameOverride: qdrant` so the Service is `qdrant:6333` | 1.20.0 was the newest; 1.19.2 is a mature patch release. Collection `chunks_sonar_v1` is created by the API at startup (Phase 5), not now. |
+| aws-cli | `amazon/aws-cli:2.38.4` (multi-arch) in the `toolbox` Deployment | Reviewers need no aws-cli on their host. |
+| Upload path | `make upload FILE=…`, `make upload-all`, `make load`, `make ls` run `scripts/upload.sh`, which streams the file via `kubectl exec -i … aws s3 cp - s3://podcasts/incoming/<name>` | No temp copy in the pod. SHA-256 of 3 uploaded mp3s matched the local files. |
+| `make up` | now runs `helm dependency build` before install | The sub-chart `.tgz` files are gitignored, so a fresh clone needs them fetched from the pinned lock. |
+
+### Filer metadata events (mini-spike results, `weed filer.meta.tail -pathPrefix=/buckets/podcasts/incoming/`)
+
+The Phase 4 subscriber depends on these.
+
+- A small upload gives exactly **1 `create` event** (`oldEntry=null`, `newEntry` set).
+- A 20 MB **multipart** upload (aws-cli, 5 chunks) also gives **1 create event**, carrying the final size. No `.uploads/` events appear under `incoming/`.
+- Our `CopyObject` to `library/` gives **no event** under the `incoming/` prefix (the prefix filter excludes it).
+- Our `DeleteObject` of `incoming/x` gives a **delete event** (`newEntry=null`). The subscriber must handle only creates and ignore deletes, or our own commit step would re-trigger it.
+- Not tested yet: overwriting an existing key (expected: one event with both `oldEntry` and `newEntry`), and resuming from a saved `since_ns`.
