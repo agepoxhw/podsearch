@@ -178,3 +178,13 @@ chunks (a hit needs support from the 20-30 s around it); it is untested. Details
 
 **Related finding.** On this model the 0.20 cosine threshold alone does not reject unrelated queries: before
 the filter, most nonsense queries still returned hits above 0.20.
+
+**Example: "going to the mall".** This query returns hits (best 0.25, higher than the legitimate query "conflict"
+at 0.21) although nobody talks about a mall. Transcribing the hits for this analysis (a throwaway tool, not part of
+the system) showed women in the streets taking off their scarves, a woman collapsing in detention, and a regime
+blaming foreign powers. SONAR matches loosely on "people, public places, everyday situations", all three episodes
+are about protest and politics, and an absolute cosine of 0.20 is not calibrated for this model. The hits sit just
+under the hub cut-off (hub score 0.08 to 0.16, against a typical 0.03), so the hub filter does not catch them. The
+threshold is fixed at 0.20 by the assignment, so I documented this instead of changing it. What I would try: score
+over neighbouring chunks, and a relative cut-off (a hit must also stand out from that query's typical scores).
+Both are untested.
