@@ -12,6 +12,13 @@ need docker 24.0 "docker --version"
 need k3d 5.6 "k3d version"
 need kubectl 1.28 "kubectl version --client"
 need helm 3.12 "helm version --short"
+# The image builds use BuildKit cache mounts, so they need the buildx plugin. Docker Desktop ships it; a Homebrew
+# or apt `docker` CLI does not, and then `docker buildx` is "unknown command".
+if command -v docker >/dev/null; then
+  if docker buildx version >/dev/null 2>&1; then echo "ok       docker buildx"
+  else echo "MISSING  docker buildx plugin. macOS: brew install docker-buildx && mkdir -p ~/.docker/cli-plugins && ln -sfn \"\$(brew --prefix)/opt/docker-buildx/bin/docker-buildx\" ~/.docker/cli-plugins/docker-buildx"
+       echo "         Linux: install the docker-buildx-plugin package (https://docs.docker.com/build/install-buildx/)"; fail=1; fi
+fi
 for t in openssl curl; do command -v $t >/dev/null && echo "ok       $t" || { echo "MISSING  $t"; fail=1; }; done
 
 if docker info >/dev/null 2>&1; then

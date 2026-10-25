@@ -7,7 +7,10 @@ similarity of at least 0.20, with a link to play each one.
 
 ## Prerequisites and bring-up
 
-- Docker with at least 16 GB of memory and 50 GB free disk (macOS: `colima start --vm-type vz --cpu 8 --memory 20 --disk 200`)
+- Docker (with the `buildx` plugin, which Docker Desktop includes) with at least 16 GB of memory and 50 GB free disk.
+  macOS with Homebrew: `brew install colima docker docker-buildx k3d kubernetes-cli helm`, then
+  `mkdir -p ~/.docker/cli-plugins && ln -sfn "$(brew --prefix)/opt/docker-buildx/bin/docker-buildx" ~/.docker/cli-plugins/docker-buildx`
+  and `colima start --vm-type vz --cpu 8 --memory 20 --disk 200`
 - `k3d` 5.6+, `kubectl` 1.28+, `helm` 3.12+, `openssl`, `curl`, `python3`
 - The assignment's audio: extract the tar into `./source_data/` (the audio is not in git)
 
