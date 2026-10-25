@@ -12,7 +12,7 @@ similarity of at least 0.20, with a link to play each one.
 - The assignment's audio: extract the tar into `./source_data/` (the audio is not in git)
 
 ```
-git clone <repo> && cd <repo>
+git clone https://github.com/agepoxhw/podsearch.git && cd podsearch
 make up       # prereqs check, cluster, images, deploy, wait until ready
 make load     # upload source_data/*.mp3 to the bucket; ingestion starts by itself
 make smoke    # wait until indexed, then assert that "Iran" returns a hit from ep334
