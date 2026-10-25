@@ -182,3 +182,12 @@ Why split: **isolation and release cycle**, not API replica count. A model OOM o
 | Known limits | The cut-off is calibrated on 3 episodes. Chunks of non-speech that are not "generic" (for example noise or near-silence with a distinct vector) may get a low score | Speech detection at ingest is the root-cause fix, see below. A periodic sample-based job to watch the score distribution is the 1000x follow-up |
 | Not done: speech detection at ingest (VAD) | Written up in the README as the root-cause fix | It would stop non-speech chunks from ever being indexed, but needs a VAD library in the speech image and a re-ingest of everything, and it would not catch other odd chunks. |
 
+
+## Phase 8 decisions (clean-clone reproducibility)
+| Topic | Decision | Why |
+|---|---|---|
+| Size guard | `.githooks/pre-commit` refuses files over 500 KB (except `wheels/fairseq2n-*.whl`); `make hooks` enables it (`git config core.hooksPath .githooks`) | Plain shell, so reviewers need no extra tool. Rejected: the `pre-commit` Python framework (one more dependency for a ten-line check). Tested with a 585 KB file. |
+| Pin audit | No `latest` anywhere. Images by tag; Helm sub-charts by `Chart.lock`; Python by per-arch lock files | Base image `python:3.11-slim-bookworm` is a tag, not a digest, so a rebuild months later could pick up a newer patch release. Digest pinning is the next step. apt packages (ffmpeg, compiler) float on purpose: exact apt versions disappear from the Debian mirror after a security update, so pins would break builds within weeks; a digest alone does not help because `apt-get update` fetches the current index. Strict reproducibility needs the base by digest plus a dated snapshot.debian.org mirror (also what an air-gapped install needs). Impact of floating: a new ffmpeg patch release could shift decoded samples slightly. |
+| `make smoke` | `scripts/smoke.sh`: uploads the audio if it is not in the bucket yet, waits until every file has moved to `library/`, then asserts that `Iran` returns at least one ep334 hit | One command proves the whole path from audio to search. Needs `source_data/` (not committed). |
+| Clean-clone test | The tracked and new files are copied to a scratch dir (what a clone would contain), then `make down`, registry deleted, `make prereqs && make up && make load && make smoke` | See JOURNAL for the timings. The Docker build cache was warm; a cold build is the 38 min measured in Phase 4b. |
+| Not done | CI, prebuilt images on GHCR, air-gapped install | Air-gapped is a README note only. |

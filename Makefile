@@ -1,4 +1,4 @@
-.PHONY: prereqs up down status logs upload upload-all load ls test lock images clean-images
+.PHONY: smoke hooks prereqs up down status logs upload upload-all load ls test lock images clean-images
 DATA_DIR ?= ./source_data
 SHELL := /bin/bash
 
@@ -26,6 +26,12 @@ upload-all:         ## upload every mp3 in DATA_DIR (default ./source_data)
 	@scripts/upload.sh $(DATA_DIR)/*.mp3
 
 load: upload-all    ## alias: load the sample data set
+
+smoke:              ## end-to-end check: audio indexed, then 'Iran' returns a hit from ep334 (needs `make up`)
+	@scripts/smoke.sh $(DATA_DIR)
+
+hooks:              ## enable the pre-commit hook that blocks files over 500 KB
+	git config core.hooksPath .githooks
 
 ls:                 ## list the bucket (incoming/, library/, rejected/)
 	@kubectl -n podsearch exec deploy/toolbox -- aws s3 ls s3://podcasts/ --recursive --human-readable

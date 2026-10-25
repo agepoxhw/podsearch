@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Block files over 500 KB so a model, mp3 or image can never slip into git. Enable with `make hooks`.
+# The one allowed binary is the self-built arm64 fairseq2n wheel (see CLAUDE.md / DECISIONS.md).
+LIMIT=512000
+bad=0
+for f in $(git diff --cached --name-only --diff-filter=AM); do
+  case "$f" in wheels/fairseq2n-*.whl) continue ;; esac
+  size=$(git cat-file -s ":$f")
+  if [ "$size" -gt "$LIMIT" ]; then echo "refusing to commit $f ($((size / 1024)) KB > 500 KB)"; bad=1; fi
+done
+exit $bad

@@ -1,6 +1,135 @@
-# Podcast semantic search (work in progress)
+# Podcast semantic search on local Kubernetes
 
-Phase 9 will turn this into the full README. Sections written so far:
+Search podcast audio by meaning, with no transcript at any point. Audio goes into an S3 bucket, is cut into
+10-second chunks, embedded with Meta's SONAR speech encoder and stored in a vector database. A text query is
+embedded with SONAR's text encoder into the same vector space, and the API returns the chunks with cosine
+similarity of at least 0.20, with a link to play each one.
+
+## Prerequisites and bring-up
+
+- Docker with at least 16 GB of memory and 50 GB free disk (macOS: `colima start --vm-type vz --cpu 8 --memory 20 --disk 200`)
+- `k3d` 5.6+, `kubectl` 1.28+, `helm` 3.12+, `openssl`, `curl`, `python3`
+- The assignment's audio: extract the tar into `./source_data/` (the audio is not in git)
+
+```
+git clone <repo> && cd <repo>
+make up       # prereqs check, cluster, images, deploy, wait until ready
+make load     # upload source_data/*.mp3 to the bucket; ingestion starts by itself
+make smoke    # wait until indexed, then assert that "Iran" returns a hit from ep334
+```
+
+Then open http://localhost:8080 (search UI and API: `/search?q=Iran`). Ray dashboard: http://localhost:8265.
+`make down` removes everything. Every target has a one-line comment in the `Makefile`.
+
+**Time and size.** Measured from a clean copy of the repo with a warm Docker build cache: `make up` 2 min 19 s (cluster 17 s,
+images 25 s, deploy 51 s, wait 40 s), then indexing the three episodes (1.5 h of audio, 540 chunks) 37 min,
+whole run 40 min. A cold first build (no Docker cache) adds the image build and the model download: I measured
+38 min for that stage after clearing the cache. It needs about 40 GB of disk (the speech image alone is about
+10 GB) and downloads several GB (torch and the two SONAR models) from PyPI, Meta's package index and the
+model host, all pinned. Re-runs of `make up` take seconds.
+
+**Tested on:** macOS arm64 (Colima, Apple `vz`). The ML images also build for linux/amd64 (official CPU wheel),
+but I did not run the cluster on x86 Linux. Windows/WSL is untested.
+
+## Architecture
+
+```
+                     host ports: 8080 API/UI   8333 S3   8265 Ray dashboard
+ upload ──► RustFS (S3) ──webhook "object created in incoming/"──► controller ──submit──► Ray job (KubeRay)
+              │  incoming/ ─► library/ (or rejected/)              ▲ reconcile: list incoming/ every 5 min
+              │                                                    │ (safety net for missed events)
+              │            Ray Data pipeline on the speech worker:
+              │            decode (ffmpeg, 16 kHz mono) ─► 10 s chunks ─► SONAR speech encoder ─► hub score
+              │                                                                      │
+              │                                                                      ▼
+              └── /audio/<file> (range requests) ◄── search-api ◄── Qdrant (collection chunks_sonar_v1, cosine)
+                                                         │
+                                                         └─ embedder (SONAR text encoder, /embed)
+```
+
+- **RustFS**: S3-compatible store. Folders are the state: `incoming/` is the backlog, `library/` is done, `rejected/` holds bad files with a reason.
+- **controller**: receives S3 bucket notifications by webhook, plus a periodic listing of `incoming/`. It debounces bursts into one Ray job and adopts a running job after a restart. It only schedules; it never touches audio.
+- **Ray on KubeRay**: a head (scheduler, no models) and a speech worker (model baked into the image). The pipeline is Ray Data: decode, embed, write.
+- **Qdrant**: one collection, true cosine. Chunk ids are deterministic, so re-running a file never duplicates points.
+- **search-api** and **embedder** are separate deployments: a model OOM or reload must not take down the UI and audio streaming.
+
+Everything runs in namespace `podsearch`, with requests and limits, non-root, probes, JSON logs and
+`/healthz` `/readyz` `/metrics` on every service.
+
+## Design choices, and what I rejected
+
+Full table with reasons: `docs/DECISIONS.md`. The ones I would defend first:
+
+| Choice | Rejected | Why |
+|---|---|---|
+| S3 bucket notifications (webhook) plus a reconciler | polling only; a vendor-specific gRPC stream | New audio is picked up in seconds, any S3 store works, and a lost event is caught by the listing. |
+| Folder as state (`incoming/` to `library/`), idempotent writes | Redis or Postgres queue | A restart loses nothing, and one fewer stateful component. |
+| One batched Ray job per burst | one job per file | Each job pays a model load; one worker is full with one job anyway. |
+| Search API and embedder split | one service | Failure isolation and separate release cycles. Throughput is capped by the embedder either way. |
+| Hub score computed per chunk at ingest | corpus-wide z-score job after each ingest | Stateless, never starves, no rescan. See the search quality section. |
+| Weights baked into images, exact pins, no runtime downloads | downloading in pods | Reproducible, and works offline once images are built. |
+| Native arm64 images with a self-built `fairseq2n` wheel (3 MB, in `wheels/`) | amd64 under Rosetta | Rosetta has no AVX: minutes per 10 s clip instead of 1.3 s. |
+| Qdrant on a PVC | vectors in object storage | Qdrant needs a real filesystem. Object storage is for snapshots. |
+
+**Adapting for air-gapped installs (written up, not built).** Vendor the Helm charts, bundle the images with
+`docker save` or `skopeo` and k3s air-gap images, use registry mirrors, turn off telemetry, and prove it with an
+egress-blocked install. In production use Zarf or Hauler. The design already helps: weights are baked into images
+and nothing is installed at runtime.
+
+## Results
+
+The four required queries are in `results/queries.md` (every hit listened to and marked correct or wrong by me).
+Summary: 40 of 55 hits correct. Details and the analysis are in `results/analysis.md`.
+
+## What I learned, and what was hardest
+
+(Draft from `docs/JOURNAL.md`: edit it into your own words before submitting.)
+
+**Hardest: making SONAR run at a usable speed on a Mac, and then making its results trustworthy.**
+- *Speed.* Under Rosetta the amd64 build has no AVX and runs on one thread: minutes per 10 s clip. I built
+  `fairseq2n` for arm64 myself (9 min, a 3 MB wheel committed under `wheels/`) and got 1.3 s per chunk.
+- *Quality.* The same non-speech chunk came out on top for every query, even nonsense, because SONAR gives such
+  audio a generic vector close to every text query. I measured it, built a hub score, and rebuilt it once after a
+  design review showed my first version would starve and rescan the corpus. The 0.20 threshold alone does not
+  reject unrelated queries on this model.
+
+**Things that surprised me**
+- Kubernetes operators have gaps. KubeRay does not replace running pods when the template changes, and Helm
+  fights the Ray autoscaler over the same field (`--force-conflicts`). Ray Data also has its own autoscaler that
+  added an idle worker every few minutes until I turned its trigger off.
+- Limits must cover the peak, not the steady state: the embedder was killed by OOM during model load at a limit
+  that was fine afterwards. Measuring beat estimating.
+- A small smoke job found bugs unit tests could not (missing dashboard extras made every Ray probe fail).
+- Silent fallbacks hide problems: `|| true` hid a pip mismatch, and a log-watching monitor missed a failed build.
+
+**What I would do differently:** ask about the object store and event interface before building, and compare
+the design with a reviewer sooner. Both of my big rewrites (SeaweedFS to RustFS, the hub job) came from that.
+
+
+## At 1000x the audio
+
+Today: 1.5 h of audio, 540 chunks, about 12 min to embed on one CPU worker (1.3 s per chunk). At 1000x:
+1,500 h, 540,000 chunks, about 190 CPU-worker-hours: about 8 days on one worker, about 2 h on 100.
+
+| What | Breaks? | Change |
+|---|---|---|
+| Embedding | Yes, the bottleneck | GPU worker group (fp16, bigger batches) scaled from zero by the Ray autoscaler plus a cluster autoscaler. I would measure the speed-up, not assume it. |
+| Cluster | Yes | Multi-node, separate CPU and GPU pools. Today one 20 GB VM fits one speech worker. |
+| Events | Partly | RustFS keeps an on-disk retry queue, but a durable broker (NATS JetStream or Kafka) would allow replay and several consumers. |
+| Controller and state | Only at a high arrival rate | Several consumers, and a Postgres table for per-file status instead of S3 objects. |
+| Ray head | Single point of failure | Head fault tolerance with Redis, or a short-lived RayJob per large batch. |
+| Object store | No durability | Multi-node, replicated store. |
+| Qdrant | Capacity is fine (540k vectors is about 2 GB) | Replication for availability, int8 quantization to cut RAM, Snapshots to RustFS as backup. |
+| Ray upgrades | Version skew | KubeRay does not roll pods on a template change (I roll them by script). Use a new cluster per version (`RayService` upgrade). |
+| Search API | Only if traffic grows | Autoscale, shared query cache, and a circuit breaker once there are many API pods. |
+| Hub filter | Scales: it is one dot product per chunk | The cut-off was calibrated on 3 episodes; add a periodic job that watches the score distribution. |
+
+I would not change the vector database at 1000x. Spend the effort on GPU embedding, a durable queue, state in
+Postgres and high availability.
+
+**More data makes quality worse at a fixed 0.20.** With 1000x more chunks, many more unrelated chunks land above
+0.20 by chance. Mitigations: metadata filters, merging adjacent hits into one segment, scoring over neighbouring
+chunks, re-ranking the top 50, and choosing the threshold per corpus from a labelled set (my labels are the seed).
 
 ## Search quality: hub chunks, and what I would do next
 
