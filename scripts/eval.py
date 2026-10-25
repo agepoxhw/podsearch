@@ -16,7 +16,7 @@ from pathlib import Path
 
 API = "http://localhost:8080"
 QUERIES = ["Putin", "Ukraine", "Middle East", "Iran"]
-K = 50                   # above the number of hits any query returns today (Putin has 30); the header says if it is not
+K = 20                   # top-k per query; a query with more hits above 0.20 is flagged in the header
 CONTEXT_K = 5            # how many below-threshold hits to show for context
 OUT = Path("results")
 ROW = re.compile(r"^\|\s*\d+\s*\|\s*(✓|✗)?\s*\|[^|]*\|[^|]*\|[^|]*\|[^|]*#t=(\d+),\d+\)\s*\|(.*)\|\s*$")
@@ -87,7 +87,7 @@ def markdown(results: list[dict], commit: str, labels: dict) -> str:
                       "`results/labels.json`; `make eval` keeps them.", ""]
     capped = [r["query"] for r in results if len(r["hits"]) >= K]
     if capped:
-        lines += [f"**Warning:** {', '.join(capped)} returned k={K} hits, so the list may be cut off. Raise `K`.", ""]
+        lines += [f"**Warning:** {', '.join(capped)} returned the top k={K}: more hits above 0.20 may exist (the API takes `k` up to its limit).", ""]
     for r in results:
         lines += [f"## {r['query']}", "", f"{len(r['hits'])} hits at or above {t}.", "",
                   "| # | Label | Score | Episode | Time | Listen | Reason |", "|---|---|---|---|---|---|---|"]

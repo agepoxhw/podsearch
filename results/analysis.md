@@ -1,6 +1,6 @@
 # Analysis of the four required queries
 
-55 hits at or above cosine 0.20, every one listened to and labelled by hand (`labels.json`). Numbers below are
+55 hits at or above cosine 0.20 (top 20 per query; Putin has 30 above 0.20, the other 10 are not judged), every one listened to and labelled by hand (`labels.json`). Numbers below are
 computed from `labels.json` and `raw.json`. The corpus is 3 episodes (540 chunks of 10 s). The hits come from
 `make eval` on commit 7f4fd59, before the hub filter change; the later hub-at-ingest commit hid the same chunks.
 

@@ -7,3 +7,5 @@ __pycache__/
 spike/
 .DS_Store
 .build/
+CLAUDE.md
+PLAN.md

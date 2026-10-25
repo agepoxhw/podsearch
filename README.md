@@ -94,7 +94,7 @@ and nothing is installed at runtime.
 ## Results
 
 The four required queries are in `results/queries.md` (every hit listened to and marked correct or wrong by me).
-Summary: 40 of 55 hits correct. Details and the analysis are in `results/analysis.md`.
+Summary: 40 of 55 hits correct (top 20 per query; Putin has 30 above 0.20, the lower 10 are not judged). Details and the analysis are in `results/analysis.md`.
 
 ## What I learned, and what was hardest
 
@@ -185,7 +185,7 @@ all. A voice-activity detector in the ingest step would drop chunks without spee
 they never reach the index. It needs a detector in the speech image and a re-ingest of all audio, which is why
 it is not in this version. The hub filter would stay as a safety net for odd chunks the detector misses.
 
-**Result quality.** Over the four required queries 40 of 55 hits are correct (73%). Putin 90%, Iran 81%,
+**Result quality.** Over the top 20 hits of each required query, 40 of 55 are correct (73%; Putin has 30 above 0.20, the lower 10 are not judged). Putin 90%, Iran 81%,
 Ukraine 58%, Middle East 29%. The wrong hits are systematic: five general-geopolitics chunks cause 13 of the 15
 errors, and none of them mention the query word. The one change I would make is averaging scores over neighbouring
 chunks (a hit needs support from the 20-30 s around it); it is untested. Details: `results/analysis.md`.

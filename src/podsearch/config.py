@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     collection: str = "chunks_sonar_v1"      # versioned: a new model means a new collection
     vector_size: int = 1024
 
-    score_threshold: float = 0.20            # true cosine, see CLAUDE.md
+    score_threshold: float = 0.20            # true cosine
     hub_max: float = 0.17                    # hide chunks with hub score above this: mean+3*std of 540 chunks = 0.173 (DECISIONS)
     max_attempts: int = 3                    # failures before a file moves to rejected/
 

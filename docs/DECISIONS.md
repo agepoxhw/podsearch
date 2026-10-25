@@ -1,6 +1,6 @@
 # DECISIONS
 
-Pinned versions and deviations from PLAN.md, with reasons.
+Pinned versions and deviations from the original plan, with reasons.
 
 ## Phase 0: toolchain versions
 
@@ -34,7 +34,7 @@ Host setup note: `~/.docker/config.json` was created with `cliPluginsExtraDirs` 
 
 - amd64 under Rosetta: PyTorch reports `cpu capability NO AVX` and `threads 1`. 3 clips took more than 10 minutes. Too slow.
 - Decision: build `fairseq2n` from source for linux/arm64 and run natively.
-- Decision (user): commit that wheel to the repo under `wheels/`, with SHA256 and build script. This overrides the "no binaries" hard rule for this one file, and CLAUDE.md was updated. Reason: Mac reviewers should not wait about an hour for a C++ build.
+- Decision (user): commit that wheel to the repo under `wheels/`, with SHA256 and build script. This overrides the "no binaries" hard rule for this one file. Reason: Mac reviewers should not wait about an hour for a C++ build.
 - Model weights: text encoder 2.85 GB, speech encoder 7.45 GB (bigger than assumed, mind the image size and disk).
 
 ## Phase 0: measured facts (native linux/arm64, 8 threads)

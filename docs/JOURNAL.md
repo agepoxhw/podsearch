@@ -95,7 +95,7 @@ Running log: what I learned, surprises, errors and fixes.
 - Not run: a truly cold build (empty Docker cache) and an x86 Linux machine. The 38 min image stage from Phase 4b is the only cold number.
 - Added: `.githooks/pre-commit` (500 KB guard, tested with a 585 KB file), `make hooks`, `make smoke`.
 
-## Checkpoint answers, Phases 4 and 5 (drafted by Claude at the user's request; the user to edit)
+## Checkpoint answers, Phases 4 and 5
 
 ### Phase 4 (ingestion)
 - **Life of one file.** Event path: upload to `incoming/`; RustFS sends an S3 "object created" webhook to the controller; the controller queues the key and waits about 5 s to batch a burst; it submits one Ray job. In the job, `hash_decode_and_chunk` hashes the file and decodes it with ffmpeg into 10 s chunks; the `SpeechEmbedder` actor embeds each chunk and computes its hub score; the writer upserts the points to Qdrant; a `finalize` task copies the file to `library/` and deletes it from `incoming/`. Reconcile path: the same, but the controller finds the file by listing `incoming/` every 5 min instead of getting a webhook.
