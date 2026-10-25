@@ -4,22 +4,28 @@ metadata:
   name: podsearch
 servers: 1
 agents: 0
+# Pinned, so a reviewer's k3d version does not pick a different Kubernetes.
+image: rancher/k3s:v1.35.5-k3s1
+# Everything is bound to 127.0.0.1: the Ray Jobs API and the registry have no authentication and must not be
+# reachable from the LAN.
+kubeAPI:
+  host: localhost
+  hostIP: 127.0.0.1
+  hostPort: "6443"
 # host port -> NodePort on the node, via k3d's built-in load balancer container.
 # Services in the chart must use these exact nodePorts.
 ports:
-  - port: 8080:30080   # search-api + UI
+  - port: 127.0.0.1:8080:30080   # search-api + UI
     nodeFilters: [loadbalancer]
-  - port: 8333:30333   # RustFS S3 (NodePort 30333 -> :9000)
+  - port: 127.0.0.1:8333:30333   # RustFS S3 (NodePort 30333 -> :9000)
     nodeFilters: [loadbalancer]
-  - port: 8265:30265   # Ray dashboard
-    nodeFilters: [loadbalancer]
-  - port: 3000:30300   # Grafana (optional monitoring)
+  - port: 127.0.0.1:8265:30265   # Ray dashboard
     nodeFilters: [loadbalancer]
 # Push from the host as localhost:5001/<img>; pods pull as podsearch-registry:5000/<img>.
 registries:
   create:
     name: podsearch-registry
-    host: "0.0.0.0"
+    host: "127.0.0.1"
     hostPort: "5001"
 options:
   k3s:

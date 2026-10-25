@@ -7,7 +7,8 @@ similarity of at least 0.20, with a link to play each one.
 
 ## Prerequisites and bring-up
 
-- Docker (with the `buildx` plugin, which Docker Desktop includes) with at least 16 GB of memory and 50 GB free disk.
+- Docker (with the `buildx` plugin, which Docker Desktop includes) with at least 6 CPUs, 16 GB of memory (20 GB
+  recommended) and 50 GB free disk (the first build uses about 40 GB).
   macOS with Homebrew: `brew install colima docker docker-buildx k3d kubernetes-cli helm`, then
   `mkdir -p ~/.docker/cli-plugins && ln -sfn "$(brew --prefix)/opt/docker-buildx/bin/docker-buildx" ~/.docker/cli-plugins/docker-buildx`
   and `colima start --vm-type vz --cpu 8 --memory 20 --disk 200`
@@ -22,7 +23,8 @@ make smoke    # wait until indexed, then assert that "Iran" returns a hit from e
 ```
 
 Then open http://localhost:8080 (search UI and API: `/search?q=Iran`). Ray dashboard: http://localhost:8265.
-`make down` removes everything. Every target has a one-line comment in the `Makefile`.
+`make down` removes the cluster (the roughly 10 GB of images stay in Docker: `make clean-images` prunes old ones).
+The services listen on 127.0.0.1 only. Every target has a one-line comment in the `Makefile`.
 
 **Time and size.** Measured on a clean Mac (Colima VM, Docker images and build cache all deleted, then a fresh
 `git clone` from GitHub): `make up` 11 min 12 s (cluster 28 s, images 9 min 12 s, deploy 44 s, wait 41 s), then
@@ -56,8 +58,18 @@ but I did not run the cluster on x86 Linux. Windows/WSL is untested.
 - **Qdrant**: one collection, true cosine. Chunk ids are deterministic, so re-running a file never duplicates points.
 - **search-api** and **embedder** are separate deployments: a model OOM or reload must not take down the UI and audio streaming.
 
-Everything runs in the namespace `podsearch`. Every container has requests and limits and runs as non-root, and
+Everything runs in the namespace `podsearch`. Every container of ours has requests and memory limits and runs as non-root, and
 every service has probes, JSON logs and `/healthz`, `/readyz` and `/metrics`.
+
+## Observability (what exists, what I skipped)
+
+I did not deploy Prometheus and Grafana: the assignment does not ask for them and I chose to spend the time on
+ingestion and search quality. Every service already exposes `/metrics` (controller: `ingest_backlog_files`,
+`ingest_lag_seconds` (the age of the oldest file in `incoming/`), `reconcile_found_total`, job counts and
+durations; API: request counts, latency, cache hits; embedder: shed requests). What I would alert on: ingest lag
+above two reconcile intervals, `reconcile_found_total` growing (events are being lost), job failures, embedder
+503s, and a rising share of zero-hit queries. Logs are JSON on stdout, ready for Loki. Without the stack, use
+`make logs` and `curl <service>/metrics`.
 
 ## Design choices, and what I rejected
 
@@ -122,6 +134,8 @@ Today: 1.5 h of audio, 540 chunks, about 12 min to embed on one CPU worker (1.3 
 | Ray head | Single point of failure | Head fault tolerance with Redis, or a short-lived RayJob per large batch. |
 | Object store | No durability | Multi-node, replicated store. |
 | Qdrant | Capacity is fine (540k vectors is about 2 GB) | Replication for availability, int8 quantization to cut RAM, Snapshots to RustFS as backup. |
+| Large files | Breaks | Today a whole file is read and decoded in RAM (about 230 MB per hour of audio, so a 10 h file hits the worker limit). Stream the decode with ranged S3 reads. |
+| Poison files | Retried forever | A file that kills the whole job is not counted as an attempt. Count attempts per file in the controller when a job fails. |
 | Ray upgrades | Version skew | KubeRay does not roll pods on a template change (I roll them by script). Use a new cluster per version (`RayService` upgrade). |
 | Search API | Only if traffic grows | Autoscale, shared query cache, and a circuit breaker once there are many API pods. |
 | Hub filter | Scales: it is one dot product per chunk | The cut-off was calibrated on 3 episodes; add a periodic job that watches the score distribution. |
@@ -161,7 +175,7 @@ is the follow-up.
 (it uses 40 fixed probe queries), but the cut-off 0.17 was chosen from the first 540 chunks. Hubs score about 0.40
 and normal speech about 0.03, so the gap is wide and the cut-off is not fragile, but I have only seen it on three
 episodes. With other shows, languages or recording quality the distribution may shift. Retuning is cheap:
-`HUB_MAX` is an API setting applied at query time, so it needs no re-ingest, and `make hubness stats` prints the
+`HUB_MAX` is an API setting applied at query time, so it needs no re-ingest, and `make hubness-stats` prints the
 current distribution. What is missing is a periodic job that watches that distribution and alerts on drift.
 The filter also cannot remove speech that is merely near a topic: the recurring wrong hits in `results/` score
 below the cut-off.

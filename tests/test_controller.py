@@ -24,6 +24,8 @@ class FakeRay:
         return f"job{len(self.submitted)}"
 
     def status(self, job_id):
+        if isinstance(self.state, Exception):
+            raise self.state
         return self.state
 
     def stop(self, job_id):
@@ -122,6 +124,49 @@ def test_restart_adopts_a_running_job(env):
     ray.active = [("jobX", ["incoming/a.mp3"])]
     ctrl.adopt_running_jobs()
     assert ctrl.job_id == "jobX" and ctrl.enqueue("incoming/a.mp3", "reconcile") is False
+
+
+def http_error(code):
+    req = httpx.Request("GET", "http://ray/api/jobs/x")
+    return httpx.HTTPStatusError("boom", request=req, response=httpx.Response(code, request=req))
+
+
+def test_job_lost_after_ray_head_restart_is_released(env):
+    ctrl, ray, _, clock = env
+    for n in "abc":
+        ctrl.enqueue(f"incoming/{n}.mp3", "event")
+    ctrl.tick()
+    ray.state = http_error(404)                       # a restarted head no longer knows the job
+    ctrl.tick()
+    assert ctrl.job_id is None and ctrl.inflight == set()
+
+
+def test_unreachable_ray_is_waited_for_but_not_forever(env):
+    ctrl, ray, _, clock = env
+    for n in "abc":
+        ctrl.enqueue(f"incoming/{n}.mp3", "event")
+    ctrl.tick()
+    ray.state = httpx.ConnectError("ray is down")
+    clock.t += 30; ctrl.tick()
+    assert ctrl.job_id == "job1"                      # a short outage: keep the job
+    clock.t += 61; ctrl.tick()
+    assert ctrl.job_id is None                        # past job_timeout_s: release it
+
+
+def test_submit_quotes_keys_for_the_shell():
+    sent = {}
+
+    class Http:
+        def post(self, path, json):
+            sent.update(json)
+            return type("R", (), {"raise_for_status": lambda s: None, "json": lambda s: {"submission_id": "j"}})()
+
+    ray = C.RayJobs.__new__(C.RayJobs)
+    ray.http = Http()
+    ray.submit(["incoming/my episode.mp3", "incoming/Lex's $(x).mp3"])
+    import shlex
+    argv = shlex.split(sent["entrypoint"])
+    assert argv[3:] == ["incoming/my episode.mp3", "incoming/Lex's $(x).mp3"]    # exactly what a shell would pass
 
 
 def test_no_submit_until_the_startup_job_check_succeeds(env):

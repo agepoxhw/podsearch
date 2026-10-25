@@ -1,4 +1,4 @@
-.PHONY: smoke hooks prereqs up down status logs upload upload-all load ls test lock images clean-images
+.PHONY: hubness-stats smoke hooks prereqs up down status logs upload upload-all load ls test lock images clean-images
 DATA_DIR ?= ./source_data
 SHELL := /bin/bash
 
@@ -38,6 +38,9 @@ ls:                 ## list the bucket (incoming/, library/, rejected/)
 
 hubness:           ## backfill `hub` scores for points that lack them (new audio is scored at ingest)
 	@kubectl -n podsearch exec deploy/controller -- python -m podsearch.hubness
+
+hubness-stats:      ## print the distribution of hub scores in Qdrant (read-only), to check HUB_MAX
+	@kubectl -n podsearch exec deploy/controller -- python -m podsearch.hubness stats
 
 probes:             ## regenerate src/podsearch/probe_centroid.json from the running embedder (only if PROBES or the model changed)
 	@kubectl -n podsearch exec deploy/controller -- python -m podsearch.hubness probes > src/podsearch/probe_centroid.json

@@ -6,6 +6,7 @@ the files are still in incoming/ and the next reconcile enqueues them again.
 """
 import hmac
 import json
+import shlex
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -43,7 +44,9 @@ class RayJobs:
 
     def submit(self, keys: list[str]) -> str:
         r = self.http.post("/api/jobs/", json={
-            "entrypoint": "python -m podsearch.ingest.pipeline " + " ".join(keys),
+            # Ray runs the entrypoint through a shell: quote every key, or a space or a quote in a file name
+            # splits it into several arguments (or runs code).
+            "entrypoint": "python -m podsearch.ingest.pipeline " + " ".join(shlex.quote(k) for k in keys),
             "metadata": {"managed_by": MANAGED_BY, "keys": json.dumps(keys)}})
         r.raise_for_status()
         return r.json()["submission_id"]
@@ -137,19 +140,30 @@ class Controller:
             self._maybe_submit()
 
     def _poll_job(self) -> None:
+        elapsed = self.clock() - self.job_started
         try:
             status = self.ray.status(self.job_id)
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:   # the Ray head restarted and lost its job records: the job is gone
+                log.warning("ray lost the job", extra={"job_id": self.job_id})
+                JOBS_BAD.labels("lost").inc()
+                self._release_job()
+                return
+            status = self._status_unknown(e)
         except httpx.HTTPError as e:
-            log.warning("ray unreachable while polling", extra={"error": repr(e)})
+            status = self._status_unknown(e)
+        if status is None:
+            if elapsed > self.s.job_timeout_s:  # Ray stays unreachable: give up on the job instead of waiting forever
+                log.warning("job timed out and Ray is unreachable, releasing it", extra={"job_id": self.job_id})
+                JOBS_BAD.labels("timeout").inc()
+                self._release_job()
             return
-        elapsed = self.clock() - self.job_started
         if status in TERMINAL:
             log.info("job finished", extra={"job_id": self.job_id, "status": status, "seconds": round(elapsed)})
             JOB_SECONDS.observe(elapsed)
             if status != "SUCCEEDED":
                 JOBS_BAD.labels(status.lower()).inc()
-            with self.lock:
-                self.inflight, self.job_id = set(), None   # unfinished files are still in incoming/: reconcile retries
+            self._release_job()
         elif elapsed > self.s.job_timeout_s:
             log.warning("job timed out, stopping it", extra={"job_id": self.job_id})
             JOBS_BAD.labels("timeout").inc()
@@ -157,6 +171,14 @@ class Controller:
                 self.ray.stop(self.job_id)
             except httpx.HTTPError as e:
                 log.warning("stop failed", extra={"error": repr(e)})
+
+    @staticmethod
+    def _status_unknown(e: Exception) -> None:
+        log.warning("ray unreachable while polling", extra={"error": repr(e)})
+
+    def _release_job(self) -> None:
+        with self.lock:
+            self.inflight, self.job_id = set(), None   # unfinished files are still in incoming/: reconcile retries
 
     def _maybe_submit(self) -> None:
         now = self.clock()
