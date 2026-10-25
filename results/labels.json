@@ -65,11 +65,11 @@
   },
   "Middle East|ep289-kotkin|1280": {
     "label": "✗",
-    "reason": ""
+    "reason": "word isn't mentioned"
   },
   "Middle East|ep289-kotkin|760": {
     "label": "✗",
-    "reason": ""
+    "reason": "word isn't mentioned"
   },
   "Middle East|ep289-kotkin|870": {
     "label": "✓",
@@ -77,11 +77,11 @@
   },
   "Middle East|ep310-bustamante|1740": {
     "label": "✗",
-    "reason": ""
+    "reason": "word isn't mentioned"
   },
   "Middle East|ep334-amanat|1700": {
     "label": "✗",
-    "reason": ""
+    "reason": "word isn't mentioned"
   },
   "Middle East|ep334-amanat|730": {
     "label": "✓",
@@ -89,7 +89,7 @@
   },
   "Middle East|ep334-amanat|780": {
     "label": "✗",
-    "reason": ""
+    "reason": "word isn't mentioned"
   },
   "Putin|ep289-kotkin|1020": {
     "label": "✓",
