@@ -94,3 +94,19 @@ Running log: what I learned, surprises, errors and fixes.
 - Indexing is slower than the 12 min I estimated in Phase 0: the speech worker starts cold on a new cluster (model load, Ray start) and the autoscaler brings up the worker; one worker runs the 3 files in one job. The README states 37 min.
 - Not run: a truly cold build (empty Docker cache) and an x86 Linux machine. The 38 min image stage from Phase 4b is the only cold number.
 - Added: `.githooks/pre-commit` (500 KB guard, tested with a 585 KB file), `make hooks`, `make smoke`.
+
+## Checkpoint answers, Phases 4 and 5 (drafted by Claude at the user's request; the user to edit)
+
+### Phase 4 (ingestion)
+- **Life of one file.** Event path: upload to `incoming/`; RustFS sends an S3 "object created" webhook to the controller; the controller queues the key and waits about 5 s to batch a burst; it submits one Ray job. In the job, `hash_decode_and_chunk` hashes the file and decodes it with ffmpeg into 10 s chunks; the `SpeechEmbedder` actor embeds each chunk and computes its hub score; the writer upserts the points to Qdrant; a `finalize` task copies the file to `library/` and deletes it from `incoming/`. Reconcile path: the same, but the controller finds the file by listing `incoming/` every 5 min instead of getting a webhook.
+- **Why both paths.** Events are fast but can be lost (receiver down, store drops its queue). The listing is slow but complete, and it retries failed files. `reconcile_found_total` counts files the reconciler found that no event announced; near 0 is healthy, growth means events are being lost.
+- **Crash between copy and delete.** The file is in both `incoming/` and `library/`. The next run sees the same sha256 in `library/`, skips embedding (a `finish_move` row) and only finishes the delete. Safe because every step is idempotent.
+- **Chunk ID is a content hash.** `uuid5(file sha256 : chunk_index)`. A key or etag changes with renames and re-uploads; the audio content does not, so the same audio always maps to the same IDs.
+- **At-least-once plus deterministic IDs.** A file may be processed twice (retry, crash, event plus reconcile). A second run upserts the same IDs with the same vectors, so nothing is duplicated and the visible result is as if it ran once. Verified by the crash test: 577 points, no duplicate `(name, chunk)` pairs.
+- **Portability of the event source.** The first version used SeaweedFS's own gRPC stream, tied to one store. Standard S3 bucket notifications (webhook) work with AWS S3, MinIO, Ceph and RustFS through the same parser. The reconciler needs only a plain S3 listing, so a store with no events still works, with up to 5 min delay.
+- **Actor vs task.** A task is a stateless function call that Ray may place on any worker; an actor is a long-lived process with state. The embedder is an actor because the model takes 5 to 50 s and about 6 GiB to load: an actor loads it once and reuses it for every batch.
+
+### Phase 5 (search API)
+- **Why the API proxies audio.** The S3 store is inside the cluster and needs credentials; exposing them or presigned URLs to the browser causes security and CORS problems. The API streams from S3 and forwards the `Range` header, so `<audio>` can seek straight to `#t=start`.
+- **`score_threshold` in Qdrant vs filtering in Python.** Qdrant applies the threshold inside the search, so only points at or above 0.20 are returned and `limit` counts only those. Filtering in Python after taking the top `k` could leave fewer than `k` hits even when more good ones exist. The hub filter also runs before `limit` and `score_threshold`.
+- **First 60 s after an API pod restarts.** The pod is not Ready until `ensure_collection` finishes, so the Service sends it no traffic and the other replica serves. If the embedder restarts (`Recreate`, about 60 s model load), `/search` returns 503 with `Retry-After: 30`; cached queries still answer, and `/audio` and the UI keep working.
