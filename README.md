@@ -53,8 +53,8 @@ but I did not run the cluster on x86 Linux. Windows/WSL is untested.
 - **Qdrant**: one collection, true cosine. Chunk ids are deterministic, so re-running a file never duplicates points.
 - **search-api** and **embedder** are separate deployments: a model OOM or reload must not take down the UI and audio streaming.
 
-Everything runs in namespace `podsearch`, with requests and limits, non-root, probes, JSON logs and
-`/healthz` `/readyz` `/metrics` on every service.
+Everything runs in the namespace `podsearch`. Every container has requests and limits and runs as non-root, and
+every service has probes, JSON logs and `/healthz`, `/readyz` and `/metrics`.
 
 ## Design choices, and what I rejected
 
@@ -83,28 +83,27 @@ Summary: 40 of 55 hits correct. Details and the analysis are in `results/analysi
 
 ## What I learned, and what was hardest
 
-(Draft from `docs/JOURNAL.md`: edit it into your own words before submitting.)
+**The hardest part was making SONAR fast enough on a Mac, and then trusting its results.**
 
-**Hardest: making SONAR run at a usable speed on a Mac, and then making its results trustworthy.**
-- *Speed.* Under Rosetta the amd64 build has no AVX and runs on one thread: minutes per 10 s clip. I built
-  `fairseq2n` for arm64 myself (9 min, a 3 MB wheel committed under `wheels/`) and got 1.3 s per chunk.
+- *Speed.* Under Rosetta the amd64 build has no AVX and runs on one thread, so a 10 s clip took minutes. I built
+  `fairseq2n` for arm64 myself (about 9 min, a 3 MB wheel that I committed under `wheels/`) and got 1.3 s per chunk.
 - *Quality.* The same non-speech chunk came out on top for every query, even nonsense, because SONAR gives such
-  audio a generic vector close to every text query. I measured it, built a hub score, and rebuilt it once after a
-  design review showed my first version would starve and rescan the corpus. The 0.20 threshold alone does not
-  reject unrelated queries on this model.
+  audio a generic vector that is close to every text query. I measured it and built a hub score. A design review
+  then showed that my first version would starve and rescan the whole corpus, so I rebuilt it to score each chunk
+  at ingest. I also learned that the 0.20 threshold alone does not reject unrelated queries on this model.
 
-**Things that surprised me**
-- Kubernetes operators have gaps. KubeRay does not replace running pods when the template changes, and Helm
-  fights the Ray autoscaler over the same field (`--force-conflicts`). Ray Data also has its own autoscaler that
-  added an idle worker every few minutes until I turned its trigger off.
-- Limits must cover the peak, not the steady state: the embedder was killed by OOM during model load at a limit
-  that was fine afterwards. Measuring beat estimating.
-- A small smoke job found bugs unit tests could not (missing dashboard extras made every Ray probe fail).
-- Silent fallbacks hide problems: `|| true` hid a pip mismatch, and a log-watching monitor missed a failed build.
+**What surprised me**
 
-**What I would do differently:** ask about the object store and event interface before building, and compare
-the design with a reviewer sooner. Both of my big rewrites (SeaweedFS to RustFS, the hub job) came from that.
+- Kubernetes operators have gaps. KubeRay does not replace running pods when the template changes, and Helm fights
+  the Ray autoscaler over the same field (I use `--force-conflicts`). Ray Data also has its own autoscaler, which
+  added an idle worker every few minutes until I switched its trigger off.
+- A memory limit has to cover the peak, not the steady state. The embedder was OOM-killed while loading the model
+  at a limit that was fine afterwards. Measuring beat estimating.
+- A small end-to-end job found bugs that unit tests could not: a missing dashboard extra made every Ray probe fail.
+- Silent fallbacks hide problems. `|| true` hid a pip version mismatch, and a log-watching monitor missed a failed build.
 
+**What I would do differently.** I would ask about the object store and the event interface before building, and
+I would get a design review sooner. Both of my big rewrites (SeaweedFS to RustFS, and the hub scoring job) came from that.
 
 ## At 1000x the audio
 
