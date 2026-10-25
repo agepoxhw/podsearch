@@ -24,12 +24,12 @@ make smoke    # wait until indexed, then assert that "Iran" returns a hit from e
 Then open http://localhost:8080 (search UI and API: `/search?q=Iran`). Ray dashboard: http://localhost:8265.
 `make down` removes everything. Every target has a one-line comment in the `Makefile`.
 
-**Time and size.** Measured from a clean copy of the repo with a warm Docker build cache: `make up` 2 min 19 s (cluster 17 s,
-images 25 s, deploy 51 s, wait 40 s), then indexing the three episodes (1.5 h of audio, 540 chunks) 37 min,
-whole run 40 min. A cold first build (no Docker cache) adds the image build and the model download: I measured
-38 min for that stage after clearing the cache. It needs about 40 GB of disk (the speech image alone is about
-10 GB) and downloads several GB (torch and the two SONAR models) from PyPI, Meta's package index and the
-model host, all pinned. Re-runs of `make up` take seconds.
+**Time and size.** Measured on a clean Mac (Colima VM, Docker images and build cache all deleted, then a fresh
+`git clone` from GitHub): `make up` 11 min 12 s (cluster 28 s, images 9 min 12 s, deploy 44 s, wait 41 s), then
+indexing the three episodes (1.5 h of audio, 540 chunks) 27 min, whole run 38 min 32 s. The image stage includes
+downloading torch and the two SONAR models (about 10 GB of images), so it depends on your network. The speech
+image alone is about 10 GB, and you need about 40 GB of free disk. All downloads are pinned. Re-runs of
+`make up` with a warm cache take about 2 min.
 
 **Tested on:** macOS arm64 (Colima, Apple `vz`). The ML images also build for linux/amd64 (official CPU wheel),
 but I did not run the cluster on x86 Linux. Windows/WSL is untested.

@@ -110,3 +110,9 @@ Running log: what I learned, surprises, errors and fixes.
 - **Why the API proxies audio.** The S3 store is inside the cluster and needs credentials; exposing them or presigned URLs to the browser causes security and CORS problems. The API streams from S3 and forwards the `Range` header, so `<audio>` can seek straight to `#t=start`.
 - **`score_threshold` in Qdrant vs filtering in Python.** Qdrant applies the threshold inside the search, so only points at or above 0.20 are returned and `limit` counts only those. Filtering in Python after taking the top `k` could leave fewer than `k` hits even when more good ones exist. The hub filter also runs before `limit` and `score_threshold`.
 - **First 60 s after an API pod restarts.** The pod is not Ready until `ensure_collection` finishes, so the Service sends it no traffic and the other replica serves. If the embedder restarts (`Recreate`, about 60 s model load), `/search` returns 503 with `Retry-After: 30`; cached queries still answer, and `/audio` and the UI keep working.
+
+## Phase 8, cold clean-machine run (2026-10-25)
+- Removed Colima (VM and 159 GB of Docker data), docker, docker-buildx, k3d, kubectl, helm, uv and ffmpeg from the Mac, reinstalled the README's prerequisites, cloned the public repo and ran `make prereqs && make up && make load && make smoke`.
+- **Found a real gap:** a Homebrew `docker` CLI has no `buildx`, and the image builds need it (`docker: unknown command: docker buildx`). `prereqs.sh` now checks for it and prints the fix; the README has the install commands. Docker Desktop includes buildx, so it only hits Colima/Homebrew users.
+- Result, cold: `make up` 672 s (images 552 s), indexing 1635 s, total 2312 s (38.5 min). `make smoke` OK, `Iran` returns 8 hits from ep334. The earlier "38 min" for the image stage in Phase 4b was a one-off with a slow download; the cold build here took 9 min.
+- Still untested: x86 Linux and Docker Desktop.
