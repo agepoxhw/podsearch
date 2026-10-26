@@ -5,6 +5,8 @@
 # needs no aws-cli and the pod needs no scratch disk.
 set -euo pipefail
 [ $# -ge 1 ] || { echo "usage: $0 FILE [FILE...]" >&2; exit 2; }
+# An empty folder leaves the shell's *.mp3 glob unexpanded; say what to do instead of "not a file".
+case "$1" in *'*'*) echo "no mp3 files found ($1): extract the assignment's audio tar into ./source_data/ (or: make load DATA_DIR=path)" >&2; exit 1 ;; esac
 NS=podsearch
 BUCKET=podcasts
 for f in "$@"; do

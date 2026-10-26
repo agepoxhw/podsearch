@@ -16,7 +16,8 @@ similarity of at least 0.20, with a link to play each one.
 - What it needs in the end: Docker with the `buildx` plugin, at least 6 CPUs, 16 GB of memory (20 GB
   recommended) and 50 GB free disk (the first build uses about 40 GB); `k3d` 5.6+, `kubectl` 1.28+, `helm` 3.12+,
   `openssl`, `curl`, `python3`
-- The assignment's audio: extract the tar into `./source_data/` (the audio is not in git)
+- The assignment's audio (the tar you were sent): extract it into `./source_data/`, or point `make load DATA_DIR=path` at
+  another folder. The audio is not in git.
 
 ```
 git clone https://github.com/agepoxhw/podsearch.git && cd podsearch
