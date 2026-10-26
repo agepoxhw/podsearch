@@ -200,3 +200,10 @@ Why split: **isolation and release cycle**, not API replica count. A model OOM o
 | Network exposure | All host ports (8080, 8333, 8265, 6443) and the registry bind to 127.0.0.1; the k3s image is pinned; the unused Grafana port is gone | The Ray Jobs API (code execution) and the registry have no authentication. |
 | Prereqs | Disk check runs `df` in a container instead of bind-mounting Docker's data dir (fails on Docker Desktop); CPU (6+), python3 and shasum are checked | Found by review, not yet tested on Docker Desktop. |
 | Known and not fixed | A file that kills the whole job is retried forever (attempts count only for errors inside the decode step); whole files are decoded in RAM (a 10 h file would hit the 9 Gi worker limit); no CPU limits on third-party pods; no hashes in the lock files | Documented for the interview. At scale: count attempts per key in the controller when a job fails, stream the decode with ranged S3 reads. |
+
+## `make up` installs missing tools (user request after the review)
+- The assignment says one command brings everything up, so `make up` now runs `scripts/install-deps.sh` before the prereqs check.
+- macOS: Homebrew packages, buildx plugin link, and `colima start` only when no Docker daemon answers. Homebrew itself is not installed for the user (it is interactive and asks for sudo); the script says where to get it.
+- Linux with apt: apt packages; k3d v5.9.0, kubectl v1.37.1 and helm v4.3.1 are downloaded at those pinned versions and verified against the publishers' checksums. Other distributions get a message, not a guess.
+- Installs only what is missing, never upgrades; `SKIP_INSTALL=1` disables it; `make prereqs` stays check-only.
+- Tested: macOS with everything present (no-op) and a fresh `ubuntu:24.04` container (full install, then a second run installs nothing; Docker daemon start skipped there). Not tested: macOS with nothing installed, Linux with a real daemon and group change.

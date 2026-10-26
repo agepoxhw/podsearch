@@ -7,17 +7,20 @@ similarity of at least 0.20, with a link to play each one.
 
 ## Prerequisites and bring-up
 
-- Docker (with the `buildx` plugin, which Docker Desktop includes) with at least 6 CPUs, 16 GB of memory (20 GB
-  recommended) and 50 GB free disk (the first build uses about 40 GB).
-  macOS with Homebrew: `brew install colima docker docker-buildx k3d kubernetes-cli helm`, then
-  `mkdir -p ~/.docker/cli-plugins && ln -sfn "$(brew --prefix)/opt/docker-buildx/bin/docker-buildx" ~/.docker/cli-plugins/docker-buildx`
-  and `colima start --vm-type vz --cpu 8 --memory 20 --disk 200`
-- `k3d` 5.6+, `kubectl` 1.28+, `helm` 3.12+, `openssl`, `curl`, `python3`
+- **`make up` installs what is missing.** On macOS it needs Homebrew (https://brew.sh) and then installs Colima,
+  Docker, buildx, k3d, kubectl and helm, and starts Colima (8 CPUs, 20 GB, 200 GB disk) if no Docker is running.
+  On Linux with apt it installs `docker.io`, buildx, openssl, curl, python3 and perl, and downloads k3d, kubectl
+  and helm at pinned versions with a checksum check (needs `sudo`; you may have to log out and in once for the
+  `docker` group). It only installs what is missing and never upgrades. `make up SKIP_INSTALL=1` turns it off,
+  and `make prereqs` only checks. Other distributions: install the tools below yourself.
+- What it needs in the end: Docker with the `buildx` plugin, at least 6 CPUs, 16 GB of memory (20 GB
+  recommended) and 50 GB free disk (the first build uses about 40 GB); `k3d` 5.6+, `kubectl` 1.28+, `helm` 3.12+,
+  `openssl`, `curl`, `python3`
 - The assignment's audio: extract the tar into `./source_data/` (the audio is not in git)
 
 ```
 git clone https://github.com/agepoxhw/podsearch.git && cd podsearch
-make up       # prereqs check, cluster, images, deploy, wait until ready
+make up       # install missing tools, prereqs check, cluster, images, deploy, wait until ready
 make load     # upload source_data/*.mp3 to the bucket; ingestion starts by itself
 make smoke    # wait until indexed, then assert that "Iran" returns a hit from ep334
 ```
@@ -106,19 +109,6 @@ Summary: 40 of 55 hits correct (top 20 per query; Putin has 30 above 0.20, the l
   audio a generic vector that is close to every text query. I measured it and built a hub score. A design review
   then showed that my first version would starve and rescan the whole corpus, so I rebuilt it to score each chunk
   at ingest. I also learned that the 0.20 threshold alone does not reject unrelated queries on this model.
-
-**What surprised me**
-
-- Kubernetes operators have gaps. KubeRay does not replace running pods when the template changes, and Helm fights
-  the Ray autoscaler over the same field (I use `--force-conflicts`). Ray Data also has its own autoscaler, which
-  added an idle worker every few minutes until I switched its trigger off.
-- A memory limit has to cover the peak, not the steady state. The embedder was OOM-killed while loading the model
-  at a limit that was fine afterwards. Measuring beat estimating.
-- A small end-to-end job found bugs that unit tests could not: a missing dashboard extra made every Ray probe fail.
-- Silent fallbacks hide problems. `|| true` hid a pip version mismatch, and a log-watching monitor missed a failed build.
-
-**What I would do differently.** I would ask about the object store and the event interface before building, and
-I would get a design review sooner. Both of my big rewrites (SeaweedFS to RustFS, and the hub scoring job) came from that.
 
 ## At 1000x the audio
 

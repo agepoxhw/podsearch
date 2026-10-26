@@ -1,11 +1,14 @@
-.PHONY: hubness-stats smoke hooks prereqs up down status logs upload upload-all load ls test lock images clean-images
+.PHONY: install-deps hubness-stats smoke hooks prereqs up down status logs upload upload-all load ls test lock images clean-images
 DATA_DIR ?= ./source_data
 SHELL := /bin/bash
 
-prereqs:            ## check host tools and Docker resources
+install-deps:       ## install missing tools (macOS: brew + Colima; Linux: apt + pinned downloads). SKIP_INSTALL=1 disables
+	@scripts/install-deps.sh
+
+prereqs:            ## check host tools and Docker resources (does not install)
 	@scripts/prereqs.sh
 
-up: prereqs         ## create/start the cluster and deploy everything (idempotent)
+up: install-deps prereqs   ## create/start the cluster and deploy everything (idempotent)
 	@scripts/up.sh
 
 down:               ## destroy the cluster and its registry
